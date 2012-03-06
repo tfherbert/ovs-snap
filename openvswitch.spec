@@ -1,6 +1,6 @@
 Name:           openvswitch
 Version:        1.4.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -33,6 +33,7 @@ Requires:       openssl iproute module-init-tools
 
 Requires(post):  systemd-units
 Requires(preun): systemd-units
+Requires(postun): systemd-units
 
 %description
 Open vSwitch provides standard network bridging functions and
@@ -160,22 +161,22 @@ fi
 %{_sbindir}/ovs-bugtool
 %{_sbindir}/ovs-vswitchd
 %{_sbindir}/ovsdb-server
-%{_mandir}/man1/ovs-benchmark.1.gz
-%{_mandir}/man1/ovs-pcap.1.gz
-%{_mandir}/man1/ovs-tcpundump.1.gz
-%{_mandir}/man1/ovsdb-client.1.gz
-%{_mandir}/man1/ovsdb-server.1.gz
-%{_mandir}/man1/ovsdb-tool.1.gz
-%{_mandir}/man5/ovs-vswitchd.conf.db.5.gz
-%{_mandir}/man8/ovs-appctl.8.gz
-%{_mandir}/man8/ovs-bugtool.8.gz
-%{_mandir}/man8/ovs-ctl.8.gz
-%{_mandir}/man8/ovs-dpctl.8.gz
-%{_mandir}/man8/ovs-ofctl.8.gz
-%{_mandir}/man8/ovs-parse-leaks.8.gz
-%{_mandir}/man8/ovs-pki.8.gz
-%{_mandir}/man8/ovs-vsctl.8.gz
-%{_mandir}/man8/ovs-vswitchd.8.gz
+%{_mandir}/man1/ovs-benchmark.1*
+%{_mandir}/man1/ovs-pcap.1*
+%{_mandir}/man1/ovs-tcpundump.1*
+%{_mandir}/man1/ovsdb-client.1*
+%{_mandir}/man1/ovsdb-server.1*
+%{_mandir}/man1/ovsdb-tool.1*
+%{_mandir}/man5/ovs-vswitchd.conf.db.5*
+%{_mandir}/man8/ovs-appctl.8*
+%{_mandir}/man8/ovs-bugtool.8*
+%{_mandir}/man8/ovs-ctl.8*
+%{_mandir}/man8/ovs-dpctl.8*
+%{_mandir}/man8/ovs-ofctl.8*
+%{_mandir}/man8/ovs-parse-leaks.8*
+%{_mandir}/man8/ovs-pki.8*
+%{_mandir}/man8/ovs-vsctl.8*
+%{_mandir}/man8/ovs-vswitchd.8*
 # /usr/share/openvswitch/bugtool-plugins and
 # /usr/share/openvswitch/scripts/ovs-bugtool* are LGPLv2+
 %{_datadir}/openvswitch/
@@ -189,7 +190,7 @@ fi
 
 %files -n ovsdbmonitor
 %{_bindir}/ovsdbmonitor
-%{_mandir}/man1/ovsdbmonitor.1.gz
+%{_mandir}/man1/ovsdbmonitor.1*
 %{_datadir}/ovsdbmonitor
 %{_datadir}/applications/ovsdbmonitor.desktop
 %doc ovsdb/ovsdbmonitor/COPYING
@@ -197,12 +198,15 @@ fi
 %files test
 %{_bindir}/ovs-test
 %{_bindir}/ovs-vlan-test
-%{_mandir}/man8/ovs-test.8.gz
-%{_mandir}/man8/ovs-vlan-test.8.gz
+%{_mandir}/man8/ovs-test.8*
+%{_mandir}/man8/ovs-vlan-test.8*
 %{python_sitelib}/ovstest
 
 
 %changelog
+* Tue Mar  6 2012 Chris Wright <chrisw@redhat.com> - 1.4.0-3
+- use glob to catch compressed manpages
+
 * Fri Mar  1 2012 Chris Wright <chrisw@redhat.com> - 1.4.0-2
 - Update License comment, use consitent macros as per review comments bz799171
 
