@@ -1,6 +1,6 @@
 Name:           openvswitch
 Version:        1.4.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -24,7 +24,7 @@ Patch0:         openvswitch-configure-ovskmod-var-autoconfd.patch
 # mv ovsdbmonitordir. Source8 (accepted upstream) is source for patch1
 Patch1:         ovsdbmonitor-move-to-its-own-data-directory-automaked.patch
 
-BuildRequires:  systemd-units openssl-devel
+BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-twisted-conch python-zope-interface PyQt4
 BuildRequires:  desktop-file-utils
 BuildRequires:  groff graphviz
@@ -204,6 +204,9 @@ fi
 
 
 %changelog
+* Tue Mar  6 2012 Chris Wright <chrisw@redhat.com> - 1.4.0-4
+- make BuildRequires openssl explicit (needed on f18/rawhide now)
+
 * Tue Mar  6 2012 Chris Wright <chrisw@redhat.com> - 1.4.0-3
 - use glob to catch compressed manpages
 
