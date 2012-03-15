@@ -1,6 +1,6 @@
 Name:           openvswitch
 Version:        1.4.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -23,6 +23,7 @@ Source8:        ovsdbmonitor-move-to-its-own-data-directory.patch
 Patch0:         openvswitch-configure-ovskmod-var-autoconfd.patch
 # mv ovsdbmonitordir. Source8 (accepted upstream) is source for patch1
 Patch1:         ovsdbmonitor-move-to-its-own-data-directory-automaked.patch
+Patch2:         openvswitch-rhel-initscripts-resync.patch
 
 BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-twisted-conch python-zope-interface PyQt4
@@ -77,6 +78,7 @@ issues in Open vSwitch setup.
 %setup -q
 %patch0 -p1 -b .ovskmod
 %patch1 -p1 -b .ovsdbmonitordir
+%patch2 -p1 -b .initscripts
 
 
 %build
@@ -204,6 +206,9 @@ fi
 
 
 %changelog
+* Thu Mar 15 2012 Chris Wright <chrisw@redhat.com> - 1.4.0-5
+- fix ovs network initscripts DHCP address acquisition (#803843)
+
 * Tue Mar  6 2012 Chris Wright <chrisw@redhat.com> - 1.4.0-4
 - make BuildRequires openssl explicit (needed on f18/rawhide now)
 
