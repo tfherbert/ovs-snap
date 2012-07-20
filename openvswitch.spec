@@ -1,6 +1,6 @@
 Name:           openvswitch
 Version:        1.4.0
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -206,6 +206,9 @@ fi
 
 
 %changelog
+* Fri Jul 20 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.4.0-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
 * Thu Mar 15 2012 Chris Wright <chrisw@redhat.com> - 1.4.0-5
 - fix ovs network initscripts DHCP address acquisition (#803843)
 
