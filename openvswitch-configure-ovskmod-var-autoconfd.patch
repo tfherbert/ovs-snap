@@ -1,12 +1,7 @@
-This is the autoconf'd result of applying
-openvswitch-configure-ovskmod-var.patch.
-It updates configure and .in files directly,
-rather than their sources.
-
-diff -aru openvswitch-1.4.0.orig/configure openvswitch-1.4.0/configure
---- openvswitch-1.4.0.orig/configure	2012-01-30 23:09:16.000000000 -0800
-+++ openvswitch-1.4.0/configure	2012-02-29 21:23:09.397779430 -0800
-@@ -599,6 +607,7 @@
+diff -up openvswitch-1.7.0/configure.ovskmod openvswitch-1.7.0/configure
+--- openvswitch-1.7.0/configure.ovskmod	2012-07-31 08:10:35.000000000 +0200
++++ openvswitch-1.7.0/configure	2012-08-17 10:35:33.251844453 +0200
+@@ -607,6 +607,7 @@ am__EXEEXT_FALSE
  am__EXEEXT_TRUE
  LTLIBOBJS
  LIBOBJS
@@ -14,7 +9,7 @@ diff -aru openvswitch-1.4.0.orig/configure openvswitch-1.4.0/configure
  LINUX_ENABLED_FALSE
  LINUX_ENABLED_TRUE
  KBUILD
-@@ -757,7 +766,8 @@
+@@ -767,7 +768,8 @@ PKG_CONFIG_PATH
  PKG_CONFIG_LIBDIR
  SSL_CFLAGS
  SSL_LIBS
@@ -24,31 +19,31 @@ diff -aru openvswitch-1.4.0.orig/configure openvswitch-1.4.0/configure
  
  
  # Initialize some variables set by options.
-@@ -1417,6 +1427,7 @@
+@@ -1427,6 +1429,7 @@ Some influential environment variables:
    SSL_CFLAGS  C compiler flags for SSL, overriding pkg-config
    SSL_LIBS    linker flags for SSL, overriding pkg-config
    KARCH       Kernel Architecture String
-+  OVSKMOD     Open vSwitch kernel module name (default openvswitch_mod)
++  OVSKMOD     Open vSwitch kernel module name (default openvswitch)
  
  Use these variables to override the choices made by `configure' or to help
  it to find libraries and programs with nonstandard names/locations.
-@@ -7882,6 +7893,12 @@
+@@ -7921,6 +7924,12 @@ fi
  
  
  
 +
 +if test "X$OVSKMOD" = "X"; then
-+    OVSKMOD=openvswitch_mod
++    OVSKMOD=openvswitch
 +fi
 +
 +
  ac_config_files="$ac_config_files Makefile datapath/Makefile datapath/linux/Kbuild datapath/linux/Makefile datapath/linux/Makefile.main tests/atlocal"
  
  
-diff -aru openvswitch-1.4.0.orig/datapath/Makefile.in openvswitch-1.4.0/datapath/Makefile.in
---- openvswitch-1.4.0.orig/datapath/Makefile.in	2012-01-30 23:09:16.000000000 -0800
-+++ openvswitch-1.4.0/datapath/Makefile.in	2012-02-29 21:23:26.744028440 -0800
-@@ -128,6 +128,7 @@
+diff -up openvswitch-1.7.0/datapath/Makefile.in.ovskmod openvswitch-1.7.0/datapath/Makefile.in
+--- openvswitch-1.7.0/datapath/Makefile.in.ovskmod	2012-07-31 08:10:36.000000000 +0200
++++ openvswitch-1.7.0/datapath/Makefile.in	2012-08-17 10:08:15.300517434 +0200
+@@ -127,6 +127,7 @@ LTLIBOBJS = @LTLIBOBJS@
  MAKEINFO = @MAKEINFO@
  MKDIR_P = @MKDIR_P@
  OBJEXT = @OBJEXT@
@@ -56,10 +51,10 @@ diff -aru openvswitch-1.4.0.orig/datapath/Makefile.in openvswitch-1.4.0/datapath
  PACKAGE = @PACKAGE@
  PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
  PACKAGE_NAME = @PACKAGE_NAME@
-diff -aru openvswitch-1.4.0.orig/Makefile.in openvswitch-1.4.0/Makefile.in
---- openvswitch-1.4.0.orig/Makefile.in	2012-01-30 23:09:16.000000000 -0800
-+++ openvswitch-1.4.0/Makefile.in	2012-02-29 21:23:27.070033119 -0800
-@@ -875,6 +875,7 @@
+diff -up openvswitch-1.7.0/Makefile.in.ovskmod openvswitch-1.7.0/Makefile.in
+--- openvswitch-1.7.0/Makefile.in.ovskmod	2012-07-31 08:12:05.000000000 +0200
++++ openvswitch-1.7.0/Makefile.in	2012-08-17 10:23:02.024495532 +0200
+@@ -927,6 +927,7 @@ LTLIBOBJS = @LTLIBOBJS@
  MAKEINFO = @MAKEINFO@
  MKDIR_P = @MKDIR_P@
  OBJEXT = @OBJEXT@
@@ -67,55 +62,56 @@ diff -aru openvswitch-1.4.0.orig/Makefile.in openvswitch-1.4.0/Makefile.in
  PACKAGE = @PACKAGE@
  PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
  PACKAGE_NAME = @PACKAGE_NAME@
-@@ -3634,6 +3635,7 @@
+@@ -3793,6 +3794,7 @@ uninstall-man: uninstall-man1 uninstall-
+                 -e 's,[@]PYTHON[@],$(PYTHON),g' \
                  -e 's,[@]RUNDIR[@],$(RUNDIR),g' \
                  -e 's,[@]VERSION[@],$(VERSION),g' \
-                 -e 's,[@]BUILDNR[@],$(BUILDNR),g' \
 +                -e 's,[@]OVSKMOD[@],$(OVSKMOD),g' \
                  -e 's,[@]localstatedir[@],$(localstatedir),g' \
                  -e 's,[@]pkgdatadir[@],$(pkgdatadir),g' \
                  -e 's,[@]sysconfdir[@],$(sysconfdir),g' \
-diff -aru openvswitch-1.4.0.orig/utilities/ovs-ctl.in openvswitch-1.4.0/utilities/ovs-ctl.in
---- openvswitch-1.4.0.orig/utilities/ovs-ctl.in	2012-01-30 23:08:18.000000000 -0800
-+++ openvswitch-1.4.0/utilities/ovs-ctl.in	2012-02-29 21:22:49.206489585 -0800
-@@ -31,14 +31,14 @@
+diff -up openvswitch-1.7.0/utilities/ovs-ctl.in.ovskmod openvswitch-1.7.0/utilities/ovs-ctl.in
+--- openvswitch-1.7.0/utilities/ovs-ctl.in.ovskmod	2012-07-31 08:05:48.000000000 +0200
++++ openvswitch-1.7.0/utilities/ovs-ctl.in	2012-08-17 10:48:08.874535857 +0200
+@@ -31,15 +31,15 @@ done
  ## ----- ##
  
  insert_openvswitch_mod_if_required () {
--    # If openvswitch_mod is already loaded then we're done.
--    test -e /sys/module/openvswitch_mod && return 0
+-    # If openvswitch is already loaded then we're done.
+-    test -e /sys/module/openvswitch -o -e /sys/module/openvswitch_mod && \
 +    # If @OVSKMOD@ is already loaded then we're done.
-+    test -e /sys/module/@OVSKMOD@ && return 0
++    test -e /sys/module/@OVSKMOD@ -o -e /sys/module/openvswitch_mod && \
+      return 0
  
--    # Load openvswitch_mod.  If that's successful then we're done.
--    action "Inserting openvswitch module" modprobe openvswitch_mod && return 0
+-    # Load openvswitch.  If that's successful then we're done.
+-    action "Inserting openvswitch module" modprobe openvswitch && return 0
 +    # Load @OVSKMOD@.  If that's successful then we're done.
 +    action "Inserting openvswitch module" modprobe @OVSKMOD@ && return 0
  
      # If the bridge module is loaded, then that might be blocking
--    # openvswitch_mod.  Try to unload it, if there are no bridges.
+-    # openvswitch.  Try to unload it, if there are no bridges.
 +    # @OVSKMOD@.  Try to unload it, if there are no bridges.
      test -e /sys/module/bridge || return 1
      bridges=`echo /sys/class/net/*/bridge | sed 's,/sys/class/net/,,g;s,/bridge,,g'`
      if test "$bridges" != "*"; then
-@@ -47,8 +47,8 @@
+@@ -48,8 +48,8 @@ insert_openvswitch_mod_if_required () {
      fi
      action "removing bridge module" rmmod bridge || return 1
  
--    # Try loading openvswitch_mod again.
--    action "Inserting openvswitch module" modprobe openvswitch_mod
+-    # Try loading openvswitch again.
+-    action "Inserting openvswitch module" modprobe openvswitch
 +    # Try loading @OVSKMOD@ again.
 +    action "Inserting openvswitch module" modprobe @OVSKMOD@
  }
  
  insert_brcompat_mod_if_required () {
-@@ -285,8 +285,8 @@
-     if test -e /sys/module/brcompat_mod; then
-         action "Removing brcompat module" rmmod brcompat_mod
+@@ -300,8 +300,8 @@ force_reload_kmod () {
      fi
--    if test -e /sys/module/openvswitch_mod; then
--        action "Removing openvswitch module" rmmod openvswitch_mod
-+    if test -e /sys/module/@OVSKMOD@; then
+     if test -e /sys/module/openvswitch_mod; then
+         action "Removing openvswitch module" rmmod openvswitch_mod
+-    elif test -e /sys/module/openvswitch; then
+-        action "Removing openvswitch module" rmmod openvswitch
++    elif test -e /sys/module/@OVSKMOD@; then
 +        action "Removing openvswitch module" rmmod @OVSKMOD@
      fi
  

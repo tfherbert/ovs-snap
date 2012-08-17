@@ -1,6 +1,6 @@
 Name:           openvswitch
-Version:        1.4.0
-Release:        6%{?dist}
+Version:        1.7.0
+Release:        1%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -17,13 +17,9 @@ Source4:        ifup-ovs
 Source5:        ifdown-ovs
 Source6:        ovsdbmonitor.desktop
 Source7:        openvswitch-configure-ovskmod-var.patch
-Source8:        ovsdbmonitor-move-to-its-own-data-directory.patch
 # make the kmod name configurable since Fedora kernel ships openvswitch module
 # Source7 is not applied, it's used to generate patch0
 Patch0:         openvswitch-configure-ovskmod-var-autoconfd.patch
-# mv ovsdbmonitordir. Source8 (accepted upstream) is source for patch1
-Patch1:         ovsdbmonitor-move-to-its-own-data-directory-automaked.patch
-Patch2:         openvswitch-rhel-initscripts-resync.patch
 
 BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-twisted-conch python-zope-interface PyQt4
@@ -77,8 +73,6 @@ issues in Open vSwitch setup.
 %prep
 %setup -q
 %patch0 -p1 -b .ovskmod
-%patch1 -p1 -b .ovsdbmonitordir
-%patch2 -p1 -b .initscripts
 
 
 %build
@@ -206,6 +200,15 @@ fi
 
 
 %changelog
+* Fri Aug 17 2012 Tomas Hozza <thozza@redhat.com> - 1.7.0-1
+- Update to 1.7.0
+- Fixed openvswitch-configure-ovskmod-var-autoconfd.patch because
+  openvswitch kernel module name changed in 1.7.0
+- Removed Source8: ovsdbmonitor-move-to-its-own-data-directory.patch
+- Patches merged:
+  - ovsdbmonitor-move-to-its-own-data-directory-automaked.patch
+  - openvswitch-rhel-initscripts-resync.patch
+
 * Fri Jul 20 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.4.0-6
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
 
