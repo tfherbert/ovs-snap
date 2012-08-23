@@ -1,6 +1,6 @@
 Name:           openvswitch
 Version:        1.7.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -115,24 +115,16 @@ rm -f \
 desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 %post
-if [ $1 -eq 1 ] ; then
-    # Initial installation
-    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
-fi
+# Initial installation
+%systemd_post openvswitch.service
 
 %preun
-if [ "$1" = "0" ]; then
-    # Package removal, not upgrade
-    /bin/systemctl --no-reload disable openvswitch.service > /dev/null 2>&1 || :
-    /bin/systemctl stop openvswitch.service > /dev/null 2>&1 || :
-fi
+# Package removal, not upgrade
+%systemd_preun openvswitch.service
 
 %postun
-/bin/systemctl daemon-reload >/dev/null 2>&1 || :
-if [ $1 -ge 1 ] ; then
-    # Package upgrade, not uninstall
-    /bin/systemctl try-restart openvswitch.service >/dev/null 2>&1 || :
-fi
+# Package upgrade, not uninstall
+%systemd_postun_with_restart openvswitch.service
 
 
 %files
@@ -200,6 +192,9 @@ fi
 
 
 %changelog
+* Thu Aug 23 2012 Tomas Hozza <thozza@redhat.com> - 1.7.0-2
+- fixed SPEC file so it comply with new systemd-rpm macros guidelines (#850258)
+
 * Fri Aug 17 2012 Tomas Hozza <thozza@redhat.com> - 1.7.0-1
 - Update to 1.7.0
 - Fixed openvswitch-configure-ovskmod-var-autoconfd.patch because
