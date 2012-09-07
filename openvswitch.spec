@@ -1,6 +1,6 @@
 Name:           openvswitch
 Version:        1.7.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -70,6 +70,16 @@ Requires:       python python-twisted-core python-twisted-web
 Utilities that are useful to diagnose performance and connectivity
 issues in Open vSwitch setup.
 
+%package controller
+Summary:        Open vSwitch OpenFlow controller
+License:        ASL 2.0
+Requires:       openvswitch = %{version}-%{release}
+
+%description controller
+Simple reference implementation of an OpenFlow controller for Open
+vSwitch. Manages any number of remote switches over OpenFlow protocol,
+causing them to function as L2 MAC-learning switches or hub.
+
 %prep
 %setup -q
 %patch0 -p1 -b .ovskmod
@@ -105,8 +115,6 @@ rmdir $RPM_BUILD_ROOT/%{_datadir}/openvswitch/python/
 
 # Get rid of stuff we don't want to make RPM happy.
 rm -f \
-    $RPM_BUILD_ROOT%{_bindir}/ovs-controller \
-    $RPM_BUILD_ROOT%{_mandir}/man8/ovs-controller.8 \
     $RPM_BUILD_ROOT%{_sbindir}/ovs-vlan-bug-workaround \
     $RPM_BUILD_ROOT%{_mandir}/man8/ovs-vlan-bug-workaround.8 \
     $RPM_BUILD_ROOT%{_sbindir}/ovs-brcompatd \
@@ -190,8 +198,15 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 %{_mandir}/man8/ovs-vlan-test.8*
 %{python_sitelib}/ovstest
 
+%files controller
+%{_bindir}/ovs-controller
+%{_mandir}/man8/ovs-controller.8*
+
 
 %changelog
+* Fri Sep  7 2012 Thomas Graf <tgraf@redhat.com> - 1.7.0.-3
+- add controller package containing ovs-controller
+
 * Thu Aug 23 2012 Tomas Hozza <thozza@redhat.com> - 1.7.0-2
 - fixed SPEC file so it comply with new systemd-rpm macros guidelines (#850258)
 
