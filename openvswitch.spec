@@ -1,6 +1,6 @@
 Name:           openvswitch
-Version:        1.7.0
-Release:        3%{?dist}
+Version:        1.7.1
+Release:        1%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -204,6 +204,9 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 
 %changelog
+* Mon Sep 10 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1.-1
+- Update to 1.7.1
+
 * Fri Sep  7 2012 Thomas Graf <tgraf@redhat.com> - 1.7.0.-3
 - add controller package containing ovs-controller
 
