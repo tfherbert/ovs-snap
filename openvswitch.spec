@@ -28,9 +28,9 @@ BuildRequires:  groff graphviz
 
 Requires:       openssl iproute module-init-tools
 
-Requires(post):  systemd-units
-Requires(preun): systemd-units
-Requires(postun): systemd-units
+Requires(post):  systemd
+Requires(preun): systemd
+Requires(postun): systemd
 
 %description
 Open vSwitch provides standard network bridging functions and
