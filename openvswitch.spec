@@ -1,6 +1,6 @@
 Name:           openvswitch
 Version:        1.7.1
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -204,6 +204,9 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 
 %changelog
+* Tue Oct 16 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-3
+- require systemd instead of systemd-units to use macro helpers (#850258)
+
 * Tue Oct  9 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-2
 - make ovs-vsctl timeout if daemon is not running (#858722)
 
