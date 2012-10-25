@@ -50,7 +50,8 @@ start () {
     fi
     "$@"
 
-    $ovs_ctl --protocol=gre enable-protocol
+# Fedora kernel does not support OVS GRE tunneling yet
+#   $ovs_ctl --protocol=gre enable-protocol
 
     touch /var/lock/subsys/openvswitch
 }

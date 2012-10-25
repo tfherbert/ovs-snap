@@ -1,6 +1,6 @@
 Name:           openvswitch
 Version:        1.7.1
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -204,6 +204,9 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 
 %changelog
+* Tue Oct 25 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-4
+- Don't add iptables accept rule for -p GRE as GRE tunneling is unsupported
+
 * Tue Oct 16 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-3
 - require systemd instead of systemd-units to use macro helpers (#850258)
 
