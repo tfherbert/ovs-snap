@@ -1,0 +1,12 @@
+diff -Nru openvswitch-1.7.1.orig/utilities/ovs-pki openvswitch-1.7.1/utilities/ovs-pki
+--- openvswitch-1.7.1.orig/utilities/ovs-pki.in	2012-11-01 14:32:27.739264199 +0100
++++ openvswitch-1.7.1/utilities/ovs-pki.in	2012-11-01 14:33:20.411784428 +0100
+@@ -219,7 +219,7 @@
+ 
+         mkdir -p certs crl newcerts
+         mkdir -p -m 0700 private
+-        mkdir -p -m 0733 incoming
++        mkdir -p -m 0700 incoming
+         touch index.txt
+         test -e crlnumber || echo 01 > crlnumber
+         test -e serial || echo 01 > serial

@@ -1,6 +1,6 @@
 Name:           openvswitch
 Version:        1.7.1
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -20,6 +20,7 @@ Source7:        openvswitch-configure-ovskmod-var.patch
 # make the kmod name configurable since Fedora kernel ships openvswitch module
 # Source7 is not applied, it's used to generate patch0
 Patch0:         openvswitch-configure-ovskmod-var-autoconfd.patch
+Patch1:         openvswitch-ovs-pki-perm.patch
 
 BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-twisted-conch python-zope-interface PyQt4
@@ -83,7 +84,7 @@ causing them to function as L2 MAC-learning switches or hub.
 %prep
 %setup -q
 %patch0 -p1 -b .ovskmod
-
+%patch1 -p1 -b .openvswitch-ovs-pki-perm
 
 %build
 %configure --enable-ssl --with-pkidir=%{_sharedstatedir}/openvswitch/pki OVSKMOD=openvswitch
@@ -204,6 +205,9 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 
 %changelog
+* Tue Nov  1 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-5
+- Don't create world writable pki/*/incomming directory (#845351)
+
 * Tue Oct 25 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-4
 - Don't add iptables accept rule for -p GRE as GRE tunneling is unsupported
 
