@@ -1,0 +1,11 @@
+--- openvswitch-1.7.1.orig/utilities/ovs-ctl.in	2012-11-20 13:36:38.782614801 +0800
++++ openvswitch-1.7.1.orig/utilities/ovs-ctl.in	2012-11-20 13:37:20.466628024 +0800
+@@ -212,7 +212,7 @@ start () {
+ 	# Increase the limit on the number of open file descriptors.
+ 	# ovs-vswitchd needs 16 per datapath, plus a few extra, so this
+ 	# should allow for 256 (or more) bridges.
+-	ulimit -n 5000
++	ulimit -n 6000
+ 
+ 	# Start ovs-vswitchd.
+ 	set ovs-vswitchd unix:"$DB_SOCK"

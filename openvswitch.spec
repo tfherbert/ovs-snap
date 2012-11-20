@@ -1,6 +1,6 @@
 Name:           openvswitch
 Version:        1.7.1
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -21,6 +21,7 @@ Source7:        openvswitch-configure-ovskmod-var.patch
 # Source7 is not applied, it's used to generate patch0
 Patch0:         openvswitch-configure-ovskmod-var-autoconfd.patch
 Patch1:         openvswitch-ovs-pki-perm.patch
+Patch2:         openvswitch-ovs-ctl-ulimit.patch
 
 BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-twisted-conch python-zope-interface PyQt4
@@ -85,6 +86,7 @@ causing them to function as L2 MAC-learning switches or hub.
 %setup -q
 %patch0 -p1 -b .ovskmod
 %patch1 -p1 -b .openvswitch-ovs-pki-perm
+%patch2 -p1 -b .openvswitch-ovs-ctl-ulimit
 
 %build
 %configure --enable-ssl --with-pkidir=%{_sharedstatedir}/openvswitch/pki OVSKMOD=openvswitch
@@ -205,6 +207,9 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 
 %changelog
+* Tue Nov 20 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-6
+- Increase max fd limit to support 256 bridges (#873072)
+
 * Tue Nov  1 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-5
 - Don't create world writable pki/*/incomming directory (#845351)
 
