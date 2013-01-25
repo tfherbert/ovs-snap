@@ -1,6 +1,6 @@
 Name:           openvswitch
 Version:        1.7.3
-Release:        6%{?dist}
+Release:        7%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -205,7 +205,11 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 
 %changelog
-* Thu Jan 24 2013 Thomas Graf <tgraf@redhat.com> - 1.7.3-1
+* Fri Jan 25 2013 Thomas Graf <tgraf@redhat.com> - 1.7.3-7
+- Auto-start openvswitch service on ifup/ifdown (#818754)
+- Add OVSREQUIRES to allow defining OpenFlow interface dependencies
+
+* Thu Jan 24 2013 Thomas Graf <tgraf@redhat.com> - 1.7.3-6
 - Update to Open vSwitch 1.7.3
 
 * Tue Nov 20 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-6
