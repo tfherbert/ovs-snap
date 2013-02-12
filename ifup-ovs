@@ -53,7 +53,13 @@ fi
 	fi
 done
 
-[ -f /var/lock/subsys/openvswitch ] || /sbin/service openvswitch start
+if [ ! -f /var/lock/subsys/openvswitch ]; then
+	if [ -x /usr/bin/systemctl ]; then
+		/usr/bin/systemctl --ignore-dependencies start openvswitch.service
+	else
+		 /sbin/service openvswitch start
+	fi
+fi
 
 case "$TYPE" in
 	OVSBridge)
