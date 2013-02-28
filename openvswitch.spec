@@ -1,6 +1,6 @@
 Name:           openvswitch
-Version:        1.7.3
-Release:        8%{?dist}
+Version:        1.9.0
+Release:        1%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -16,11 +16,6 @@ Source3:        openvswitch.logrotate
 Source4:        ifup-ovs
 Source5:        ifdown-ovs
 Source6:        ovsdbmonitor.desktop
-Source7:        openvswitch-configure-ovskmod-var.patch
-# make the kmod name configurable since Fedora kernel ships openvswitch module
-# Source7 is not applied, it's used to generate patch0
-Patch0:         openvswitch-configure-ovskmod-var-autoconfd.patch
-Patch1:         openvswitch-ovs-pki-perm.patch
 
 BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-twisted-conch python-zope-interface PyQt4
@@ -83,11 +78,9 @@ causing them to function as L2 MAC-learning switches or hub.
 
 %prep
 %setup -q
-%patch0 -p1 -b .ovskmod
-%patch1 -p1 -b .openvswitch-ovs-pki-perm
 
 %build
-%configure --enable-ssl --with-pkidir=%{_sharedstatedir}/openvswitch/pki OVSKMOD=openvswitch
+%configure --enable-ssl --with-pkidir=%{_sharedstatedir}/openvswitch/pki
 make %{?_smp_mflags}
 
 
@@ -154,6 +147,7 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 %{_bindir}/ovs-vsctl
 %{_bindir}/ovsdb-client
 %{_bindir}/ovsdb-tool
+%{_bindir}/ovs-parse-backtrace
 # ovs-bugtool is LGPLv2+
 %{_sbindir}/ovs-bugtool
 %{_sbindir}/ovs-vswitchd
@@ -174,6 +168,7 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 %{_mandir}/man8/ovs-pki.8*
 %{_mandir}/man8/ovs-vsctl.8*
 %{_mandir}/man8/ovs-vswitchd.8*
+%{_mandir}/man8/ovs-parse-backtrace.8*
 # /usr/share/openvswitch/bugtool-plugins and
 # /usr/share/openvswitch/scripts/ovs-bugtool* are LGPLv2+
 %{_datadir}/openvswitch/
@@ -195,8 +190,10 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 %files test
 %{_bindir}/ovs-test
 %{_bindir}/ovs-vlan-test
+%{_bindir}/ovs-l3ping
 %{_mandir}/man8/ovs-test.8*
 %{_mandir}/man8/ovs-vlan-test.8*
+%{_mandir}/man8/ovs-l3ping.8*
 %{python_sitelib}/ovstest
 
 %files controller
@@ -205,6 +202,9 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 
 %changelog
+* Tue Feb 28 2013 Thomas Graf <tgraf@redhat.com> - 1.9.0-1
+- Update to 1.9.0 (#916537)
+
 * Tue Feb 12 2013 Thomas Graf <tgraf@redhat.com> - 1.7.3-8
 - Fix systemd service dependency loop (#818754)
 
