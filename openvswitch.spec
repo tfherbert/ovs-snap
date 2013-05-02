@@ -1,5 +1,5 @@
 Name:           openvswitch
-Version:        1.9.0
+Version:        1.10.0
 Release:        1%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
@@ -24,9 +24,9 @@ BuildRequires:  groff graphviz
 
 Requires:       openssl iproute module-init-tools
 
-Requires(post):  systemd
-Requires(preun): systemd
-Requires(postun): systemd
+Requires(post): systemd-units
+Requires(preun): systemd-units
+Requires(postun): systemd-units
 
 %description
 Open vSwitch provides standard network bridging functions and
@@ -117,17 +117,47 @@ rm -f \
 desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 %post
-# Initial installation
-%systemd_post openvswitch.service
+%if 0%{?systemd_post:1}
+    %systemd_post %{name}.service
+%else
+    # Package install, not upgrade
+    if [ $1 -eq 1 ]; then
+        /bin/systemctl daemon-reload >dev/null || :
+    fi
+%endif
+
+# Package with native systemd unit file is installed for the first time
+%triggerun -- %{name} < 1.9.0-1
+# Save the current service runlevel info
+# User must manually run systemd-sysv-convert --apply openvswitch
+# to migrate them to systemd targets
+/usr/bin/systemd-sysv-convert --save %{name} >/dev/null 2>&1 ||:
+
+# Run these because the SysV package being removed won't do them
+/sbin/chkconfig --del %{name} >/dev/null 2>&1 || :
+/bin/systemctl try-restart %{name}.service >/dev/null 2>&1 || :
 
 %preun
-# Package removal, not upgrade
-%systemd_preun openvswitch.service
+%if 0%{?systemd_preun:1}
+    %systemd_preun %{name}.service
+%else
+    if [ $1 -eq 0 ] ; then
+    # Package removal, not upgrade
+        /bin/systemctl --no-reload disable %{name}.service >/dev/null 2>&1 || :
+        /bin/systemctl stop %{name}.service >/dev/null 2>&1 || :
+    fi
+%endif
 
 %postun
-# Package upgrade, not uninstall
-%systemd_postun_with_restart openvswitch.service
-
+%if 0%{?systemd_postun_with_restart:1}
+    %systemd_postun_with_restart %{name}.service
+%else
+    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+    if [ "$1" -ge "1" ] ; then
+    # Package upgrade, not uninstall
+        /bin/systemctl try-restart %{name}.service >/dev/null 2>&1 || :
+    fi
+%endif
 
 %files
 %{_sysconfdir}/openvswitch/
@@ -202,6 +232,9 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 
 %changelog
+* Tue May 02 2013 Thomas Graf <tgraf@redhat.com> - 1.10.0-1
+- Update to 1.10.0 (#958814)
+
 * Tue Feb 28 2013 Thomas Graf <tgraf@redhat.com> - 1.9.0-1
 - Update to 1.9.0 (#916537)
 
