@@ -18,6 +18,7 @@ Source3:        openvswitch.logrotate
 Source4:        ifup-ovs
 Source5:        ifdown-ovs
 Source6:        ovsdbmonitor.desktop
+Source7:        openvswitch-nonetwork.service
 
 BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-twisted-conch python-zope-interface PyQt4
@@ -97,6 +98,7 @@ dst=$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/openvswitch
 install -p -D -m 0644 $src $dst
 
 install -p -D -m 0644 %{SOURCE1} $RPM_BUILD_ROOT%{_unitdir}/openvswitch.service
+install -p -D -m 0644 %{SOURCE7} $RPM_BUILD_ROOT%{_unitdir}/openvswitch-nonetwork.service
 install -p -D -m 0755 %{SOURCE2} $RPM_BUILD_ROOT%{_datadir}/openvswitch/scripts/openvswitch.init
 install -p -D -m 0644 %{SOURCE3} $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/openvswitch
 
@@ -168,6 +170,7 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 %{_sysconfdir}/sysconfig/network-scripts/ifup-ovs
 %{_sysconfdir}/sysconfig/network-scripts/ifdown-ovs
 %{_unitdir}/openvswitch.service
+%{_unitdir}/openvswitch-nonetwork.service
 %{_bindir}/ovs-appctl
 %{_bindir}/ovs-benchmark
 %{_bindir}/ovs-dpctl
@@ -236,6 +239,7 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 %changelog
 * Mon Jul 01 2013 Thomas Graf <tgraf@redhat.com> - 1.10.0-2
 - Enable PIE (#955181)
+- Provide native systemd unit files (#818754)
 
 * Tue May 02 2013 Thomas Graf <tgraf@redhat.com> - 1.10.0-1
 - Update to 1.10.0 (#958814)

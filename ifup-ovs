@@ -55,7 +55,7 @@ done
 
 if [ ! -f /var/lock/subsys/openvswitch ]; then
 	if [ -x /usr/bin/systemctl ]; then
-		/usr/bin/systemctl --ignore-dependencies start openvswitch.service
+		/usr/bin/systemctl start openvswitch-nonetwork.service
 	else
 		 /sbin/service openvswitch start
 	fi

@@ -1,12 +1,15 @@
 [Unit]
-Description=Open vSwitch
-After=syslog.target network.target
+Description=Open vSwitch Unit
+After=syslog.target
+After=network.target
+After=openvswitch-nonetwork.service
+Requires=openvswitch-nonetwork.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/share/openvswitch/scripts/openvswitch.init start
-ExecStop=/usr/share/openvswitch/scripts/openvswitch.init stop
 RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/bin/true
 
 [Install]
 WantedBy=multi-user.target

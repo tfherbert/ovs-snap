@@ -1,0 +1,16 @@
+[Unit]
+Description=Open vSwitch Internal Unit
+After=syslog.target
+PartOf=openvswitch.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/sysconfig/openvswitch
+RemainAfterExit=yes
+ExecStartPost=/usr/bin/touch /var/lock/subsys/openvswitch
+ExecStart=/usr/share/openvswitch/scripts/ovs-ctl start --system-id=random \
+	$FORCE_COREFILES $OVSDB_SERVER_PRIORITY $VSWITCHD_PRIORITY \
+	$VSWITCHD_MLOCKALL $BRCOMPAT $OVS_CTL_OPTS
+ExecStop=/usr/share/openvswitch/scripts/ovs-ctl stop
+ExecStopPost=/bin/rm /var/lock/subsys/openvswitch
+
