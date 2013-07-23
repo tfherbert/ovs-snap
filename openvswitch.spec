@@ -2,7 +2,7 @@
 
 Name:           openvswitch
 Version:        1.10.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -19,6 +19,7 @@ Source4:        ifup-ovs
 Source5:        ifdown-ovs
 Source6:        ovsdbmonitor.desktop
 Source7:        openvswitch-nonetwork.service
+Source8:        sysconfig.template
 
 BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-twisted-conch python-zope-interface PyQt4
@@ -88,14 +89,11 @@ make %{?_smp_mflags}
 
 
 %install
-rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 
 install -d -m 0755 $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch
 
-src=rhel/usr_share_openvswitch_scripts_sysconfig.template
-dst=$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/openvswitch
-install -p -D -m 0644 $src $dst
+install -p -D -m 0644 %{SOURCE7} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/openvswitch
 
 install -p -D -m 0644 %{SOURCE1} $RPM_BUILD_ROOT%{_unitdir}/openvswitch.service
 install -p -D -m 0644 %{SOURCE7} $RPM_BUILD_ROOT%{_unitdir}/openvswitch-nonetwork.service
@@ -237,6 +235,10 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 
 %changelog
+* Tue Jul 23 2013 Thomas Graf <tgraf@redhat.com> - 1.10.0-4
+- Spec file fixes
+- Maintain local copy of sysconfig.template
+
 * Thu Jul 18 2013 Petr Pisar <ppisar@redhat.com> - 1.10.0-3
 - Perl 5.18 rebuild
 
@@ -244,10 +246,10 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 - Enable PIE (#955181)
 - Provide native systemd unit files (#818754)
 
-* Tue May 02 2013 Thomas Graf <tgraf@redhat.com> - 1.10.0-1
+* Thu May 02 2013 Thomas Graf <tgraf@redhat.com> - 1.10.0-1
 - Update to 1.10.0 (#958814)
 
-* Tue Feb 28 2013 Thomas Graf <tgraf@redhat.com> - 1.9.0-1
+* Thu Feb 28 2013 Thomas Graf <tgraf@redhat.com> - 1.9.0-1
 - Update to 1.9.0 (#916537)
 
 * Tue Feb 12 2013 Thomas Graf <tgraf@redhat.com> - 1.7.3-8
@@ -263,10 +265,10 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 * Tue Nov 20 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-6
 - Increase max fd limit to support 256 bridges (#873072)
 
-* Tue Nov  1 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-5
+* Thu Nov  1 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-5
 - Don't create world writable pki/*/incomming directory (#845351)
 
-* Tue Oct 25 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-4
+* Thu Oct 25 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-4
 - Don't add iptables accept rule for -p GRE as GRE tunneling is unsupported
 
 * Tue Oct 16 2012 Thomas Graf <tgraf@redhat.com> - 1.7.1-3
@@ -305,7 +307,7 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 * Tue Mar  6 2012 Chris Wright <chrisw@redhat.com> - 1.4.0-3
 - use glob to catch compressed manpages
 
-* Fri Mar  1 2012 Chris Wright <chrisw@redhat.com> - 1.4.0-2
+* Thu Mar  1 2012 Chris Wright <chrisw@redhat.com> - 1.4.0-2
 - Update License comment, use consitent macros as per review comments bz799171
 
 * Wed Feb 29 2012 Chris Wright <chrisw@redhat.com> - 1.4.0-1
