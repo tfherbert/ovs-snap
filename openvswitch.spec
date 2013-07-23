@@ -2,7 +2,7 @@
 
 Name:           openvswitch
 Version:        1.10.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -93,7 +93,7 @@ make install DESTDIR=$RPM_BUILD_ROOT
 
 install -d -m 0755 $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch
 
-install -p -D -m 0644 %{SOURCE7} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/openvswitch
+install -p -D -m 0644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/openvswitch
 
 install -p -D -m 0644 %{SOURCE1} $RPM_BUILD_ROOT%{_unitdir}/openvswitch.service
 install -p -D -m 0644 %{SOURCE7} $RPM_BUILD_ROOT%{_unitdir}/openvswitch-nonetwork.service
@@ -235,6 +235,9 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 
 %changelog
+* Tue Jul 23 2013 Thomas Graf <tgraf@redhat.com> - 1.10.0-5
+- Typo
+
 * Tue Jul 23 2013 Thomas Graf <tgraf@redhat.com> - 1.10.0-4
 - Spec file fixes
 - Maintain local copy of sysconfig.template
