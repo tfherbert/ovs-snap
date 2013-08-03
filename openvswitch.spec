@@ -2,7 +2,7 @@
 
 Name:           openvswitch
 Version:        1.10.0
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -235,6 +235,9 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 
 %changelog
+* Sat Aug 03 2013 Petr Pisar <ppisar@redhat.com> - 1.10.0-6
+- Perl 5.18 rebuild
+
 * Tue Jul 23 2013 Thomas Graf <tgraf@redhat.com> - 1.10.0-5
 - Typo
 
