@@ -2,6 +2,7 @@
 Description=Open vSwitch Internal Unit
 After=syslog.target
 PartOf=openvswitch.service
+Wants=openvswitch.service
 
 [Service]
 Type=oneshot
