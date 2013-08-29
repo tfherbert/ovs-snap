@@ -1,8 +1,8 @@
 %global _hardened_build 1
 
 Name:           openvswitch
-Version:        1.10.0
-Release:        7%{?dist}
+Version:        1.11.0
+Release:        1%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -235,6 +235,9 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 
 %changelog
+* Thu Aug 29 2013 Thomas Graf <tgraf@redhat.com> - 1.11.0-1
+- Update to 1.11.0
+
 * Tue Aug 13 2013 Flavio Leitner <fbl@redhat.com> - 1.10.0-7
 - Fixed openvswitch-nonetwork to start openvswitch.service (#996804)
 
