@@ -1,8 +1,25 @@
 %global _hardened_build 1
 
+
+# This provides a way for distros that doesn't provide
+# python-twisted-conch to disable building of ovsdbmonitor
+# by default. You can override by passing --with ovsdbmonitor
+# or --without ovsdbmonitor while building the RPM.
+%if 0%{?el7}
+%define _pkg_ovsdbmonitor 0
+%else
+%define _pkg_ovsdbmonitor 1
+%endif
+
+%if %{?_with_ovsdbmonitor: 1}%{!?_with_ovsdbmonitor: 0}
+%define with_ovsdbmonitor 1
+%else
+%define with_ovsdbmonitor %{?_without_ovsdbmonitor: 0}%{!?_without_ovsdbmonitor: %{_pkg_ovsdbmonitor}}
+%endif
+
 Name:           openvswitch
 Version:        1.11.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -22,9 +39,12 @@ Source7:        openvswitch-nonetwork.service
 Source8:        sysconfig.template
 
 BuildRequires:  systemd-units openssl openssl-devel
-BuildRequires:  python python-twisted-core python-twisted-conch python-zope-interface PyQt4
+BuildRequires:  python python-twisted-core python-zope-interface PyQt4
 BuildRequires:  desktop-file-utils
 BuildRequires:  groff graphviz
+%if %{with_ovsdbmonitor}
+BuildRequires:  python-twisted-conch
+%endif
 
 Requires:       openssl iproute module-init-tools
 
@@ -46,6 +66,7 @@ Requires:       python
 %description -n python-openvswitch
 Python bindings for the Open vSwitch database
 
+%if %{with_ovsdbmonitor}
 %package -n ovsdbmonitor
 Summary:        Open vSwitch graphical monitoring tool
 License:        ASL 2.0
@@ -58,6 +79,7 @@ A GUI tool for monitoring and troubleshooting local or remote Open
 vSwitch installations.  It presents GUI tables that graphically represent
 an Open vSwitch kernel flow table (similar to "ovs-dpctl dump-flows")
 and Open vSwitch database contents (similar to "ovs-vsctl list <table>").
+%endif
 
 %package test
 Summary:        Open vSwitch testing utilities
@@ -117,6 +139,15 @@ rm -f \
     $RPM_BUILD_ROOT%{_mandir}/man8/ovs-brcompatd.8
 
 desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
+
+%if ! %{with_ovsdbmonitor}
+rm -f $RPM_BUILD_ROOT%{_bindir}/ovsdbmonitor
+rm -f $RPM_BUILD_ROOT%{_mandir}/man1/ovsdbmonitor.1*
+rm -rf $RPM_BUILD_ROOT%{_datadir}/ovsdbmonitor
+rm -f $RPM_BUILD_ROOT%{_datadir}/applications/ovsdbmonitor.desktop
+rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
+%endif
+
 
 %post
 %if 0%{?systemd_post:1}
@@ -213,12 +244,14 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 %{python_sitelib}/ovs
 %doc COPYING
 
+%if %{with_ovsdbmonitor}
 %files -n ovsdbmonitor
 %{_bindir}/ovsdbmonitor
 %{_mandir}/man1/ovsdbmonitor.1*
 %{_datadir}/ovsdbmonitor
 %{_datadir}/applications/ovsdbmonitor.desktop
 %doc ovsdb/ovsdbmonitor/COPYING
+%endif
 
 %files test
 %{_bindir}/ovs-test
@@ -235,6 +268,9 @@ desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
 
 
 %changelog
+* Thu Sep 19 2013 Flavio Leitner <fbl@redhat.com> - 1.11.0-2
+- ovsdbmonitor package is optional
+
 * Thu Aug 29 2013 Thomas Graf <tgraf@redhat.com> - 1.11.0-1
 - Update to 1.11.0
 
