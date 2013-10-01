@@ -19,7 +19,7 @@
 
 Name:           openvswitch
 Version:        1.11.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -268,6 +268,9 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 
 
 %changelog
+* Tue Oct 1 2013 Flavio Leitner <fbl@redhat.com> - 1.11.0-3
+- don't use /var/lock/subsys with systemd (#1006412)
+
 * Thu Sep 19 2013 Flavio Leitner <fbl@redhat.com> - 1.11.0-2
 - ovsdbmonitor package is optional
 

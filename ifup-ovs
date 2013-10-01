@@ -53,11 +53,13 @@ fi
 	fi
 done
 
-if [ ! -f /var/lock/subsys/openvswitch ]; then
-	if [ -x /usr/bin/systemctl ]; then
+if [ -x /usr/bin/systemctl ]; then
+	if ! systemctl --quiet is-active openvswitch-nonetwork.service; then
 		/usr/bin/systemctl start openvswitch-nonetwork.service
-	else
-		 /sbin/service openvswitch start
+	fi
+else
+	if [ ! -f /var/lock/subsys/openvswitch ]; then
+		/sbin/service openvswitch start
 	fi
 fi
 
