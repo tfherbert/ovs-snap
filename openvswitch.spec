@@ -18,8 +18,8 @@
 %endif
 
 Name:           openvswitch
-Version:        1.11.0
-Release:        8%{?dist}
+Version:        2.0.0
+Release:        1%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -207,8 +207,8 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 %{_bindir}/ovs-appctl
 %{_bindir}/ovs-benchmark
 %{_bindir}/ovs-dpctl
+%{_bindir}/ovs-dpctl-top
 %{_bindir}/ovs-ofctl
-%{_bindir}/ovs-parse-leaks
 %{_bindir}/ovs-pcap
 %{_bindir}/ovs-pki
 %{_bindir}/ovs-tcpundump
@@ -231,8 +231,8 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 %{_mandir}/man8/ovs-bugtool.8*
 %{_mandir}/man8/ovs-ctl.8*
 %{_mandir}/man8/ovs-dpctl.8*
+%{_mandir}/man8/ovs-dpctl-top.8*
 %{_mandir}/man8/ovs-ofctl.8*
-%{_mandir}/man8/ovs-parse-leaks.8*
 %{_mandir}/man8/ovs-pki.8*
 %{_mandir}/man8/ovs-vsctl.8*
 %{_mandir}/man8/ovs-vswitchd.8*
@@ -273,6 +273,9 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 
 
 %changelog
+* Mon Oct 28 2013 Flavio Leitner <fbl@redhat.com> - 2.0.0-1
+- updated to 2.0.0 (#1023184)
+
 * Mon Oct 28 2013 Flavio Leitner <fbl@redhat.com> - 1.11.0-8
 - applied upstream commit 7b75828bf5654c494a53fa57be90713c625085e2
   rhel: Option to create tunnel through ifcfg scripts.
