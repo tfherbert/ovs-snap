@@ -19,7 +19,7 @@
 
 Name:           openvswitch
 Version:        1.11.0
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -268,6 +268,10 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 
 
 %changelog
+* Mon Oct 28 2013 Flavio Leitner <fbl@redhat.com> - 1.11.0-5
+- applied upstream commit 79416011612541d103a1d396d888bb8c84eb1da4
+  rhel: Return an exit value of 0 for ifup-ovs.
+
 * Mon Oct 28 2013 Flavio Leitner <fbl@redhat.com> - 1.11.0-4
 - applied upstream commit 2517bad92eec7e5625bc8b248db22fdeaa5fcde9
   Added RHEL ovs-ifup STP option handling
