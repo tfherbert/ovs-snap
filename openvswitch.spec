@@ -19,7 +19,7 @@
 
 Name:           openvswitch
 Version:        1.11.0
-Release:        6%{?dist}
+Release:        7%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -273,6 +273,10 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 
 
 %changelog
+* Mon Oct 28 2013 Flavio Leitner <fbl@redhat.com> - 1.11.0-7
+- applied upstream commit 32aa46891af5e173144d672e15fec7c305f9a4f3
+  rhel: Set STP of a bridge during bridge creation.
+
 * Mon Oct 28 2013 Flavio Leitner <fbl@redhat.com> - 1.11.0-6
 - applied upstream commit 5b56f96aaad4a55a26576e0610fb49bde448dabe
   rhel: Prevent duplicate ifup calls.
