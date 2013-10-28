@@ -19,7 +19,7 @@
 
 Name:           openvswitch
 Version:        1.11.0
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -37,6 +37,7 @@ Source5:        ifdown-ovs
 Source6:        ovsdbmonitor.desktop
 Source7:        openvswitch-nonetwork.service
 Source8:        sysconfig.template
+Source9:        README.RHEL
 
 BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-zope-interface PyQt4
@@ -130,6 +131,9 @@ install -d -m 0755 $RPM_BUILD_ROOT/%{_sharedstatedir}/openvswitch
 install -d -m 0755 $RPM_BUILD_ROOT%{python_sitelib}
 mv $RPM_BUILD_ROOT/%{_datadir}/openvswitch/python/* $RPM_BUILD_ROOT%{python_sitelib}
 rmdir $RPM_BUILD_ROOT/%{_datadir}/openvswitch/python/
+
+mkdir -p $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
+install -p -m 0644 %{SOURCE9} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
 
 # Get rid of stuff we don't want to make RPM happy.
 rm -f \
@@ -237,8 +241,9 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 # /usr/share/openvswitch/scripts/ovs-bugtool* are LGPLv2+
 %{_datadir}/openvswitch/
 %{_sharedstatedir}/openvswitch
+%{_docdir}/%{name}-%{version}/README.RHEL
 # see COPYING for full licensing details
-%doc COPYING DESIGN INSTALL.SSL NOTICE README WHY-OVS rhel/README.RHEL
+%doc COPYING DESIGN INSTALL.SSL NOTICE README WHY-OVS
 
 %files -n python-openvswitch
 %{python_sitelib}/ovs
@@ -268,6 +273,10 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 
 
 %changelog
+* Mon Oct 28 2013 Flavio Leitner <fbl@redhat.com> - 1.11.0-6
+- applied upstream commit 5b56f96aaad4a55a26576e0610fb49bde448dabe
+  rhel: Prevent duplicate ifup calls.
+
 * Mon Oct 28 2013 Flavio Leitner <fbl@redhat.com> - 1.11.0-5
 - applied upstream commit 79416011612541d103a1d396d888bb8c84eb1da4
   rhel: Return an exit value of 0 for ifup-ovs.
