@@ -15,7 +15,7 @@
 
 Name:           openvswitch
 Version:        2.0.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -32,6 +32,7 @@ Source9:        README.RHEL
 Patch1: openvswitch-util-use-gcc-builtins-to-better-check-array-sizes.patch
 Patch2: openvswitch-fedora-package-fix-systemd-ordering-and-deps.patch
 Patch3: openvswitch-initscripts-add-tunnel-support.patch
+Patch4: openvswitch-rhel-Enable-DHCP-support-for-internal-ports.patch
 
 BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-zope-interface PyQt4
@@ -102,6 +103,7 @@ causing them to function as L2 MAC-learning switches or hub.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
 
 %build
 %configure --enable-ssl --with-pkidir=%{_sharedstatedir}/openvswitch/pki
@@ -281,6 +283,10 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 
 
 %changelog
+* Wed Jan 15 2014 Flavio Leitner <fbl@redhat.com> - 2.0.0-5
+- Enable DHCP support for internal ports
+  (upstream commit 490db96efaf89c63656b192d5ca287b0908a6c77)
+
 * Wed Jan 15 2014 Flavio Leitner <fbl@redhat.com> - 2.0.0-4
 - disabled ovsdbmonitor packaging
   (upstream has removed the component)
