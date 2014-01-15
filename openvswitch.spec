@@ -5,11 +5,7 @@
 # python-twisted-conch to disable building of ovsdbmonitor
 # by default. You can override by passing --with ovsdbmonitor
 # or --without ovsdbmonitor while building the RPM.
-%if 0%{?el7}
 %define _pkg_ovsdbmonitor 0
-%else
-%define _pkg_ovsdbmonitor 1
-%endif
 
 %if %{?_with_ovsdbmonitor: 1}%{!?_with_ovsdbmonitor: 0}
 %define with_ovsdbmonitor 1
@@ -285,6 +281,10 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 
 
 %changelog
+* Wed Jan 15 2014 Flavio Leitner <fbl@redhat.com> - 2.0.0-4
+- disabled ovsdbmonitor packaging
+  (upstream has removed the component)
+
 * Wed Jan 15 2014 Flavio Leitner <fbl@redhat.com> - 2.0.0-3
 - fedora package: fix systemd ordering and deps.
   (upstream commit b49c106ef00438b1c59876dad90d00e8d6e7b627)
