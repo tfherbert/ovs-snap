@@ -19,7 +19,7 @@
 
 Name:           openvswitch
 Version:        2.0.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -29,17 +29,13 @@ Summary:        Open vSwitch daemon/database/utilities
 License:        ASL 2.0 and LGPLv2+ and SISSL
 URL:            http://openvswitch.org
 Source0:        http://openvswitch.org/releases/%{name}-%{version}.tar.gz
-Source1:        openvswitch.service
-Source2:        openvswitch.init
 Source3:        openvswitch.logrotate
-Source4:        ifup-ovs
-Source5:        ifdown-ovs
 Source6:        ovsdbmonitor.desktop
-Source7:        openvswitch-nonetwork.service
-Source8:        sysconfig.template
 Source9:        README.RHEL
 
 Patch1: openvswitch-util-use-gcc-builtins-to-better-check-array-sizes.patch
+Patch2: openvswitch-fedora-package-fix-systemd-ordering-and-deps.patch
+Patch3: openvswitch-initscripts-add-tunnel-support.patch
 
 BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-zope-interface PyQt4
@@ -108,6 +104,8 @@ causing them to function as L2 MAC-learning switches or hub.
 %prep
 %setup -q
 %patch1 -p1
+%patch2 -p1
+%patch3 -p1
 
 %build
 %configure --enable-ssl --with-pkidir=%{_sharedstatedir}/openvswitch/pki
@@ -119,15 +117,26 @@ make install DESTDIR=$RPM_BUILD_ROOT
 
 install -d -m 0755 $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch
 
-install -p -D -m 0644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/openvswitch
+install -p -D -m 0644 \
+	rhel/usr_share_openvswitch_scripts_systemd_sysconfig.template \
+	$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/openvswitch
+install -p -D -m 0644 \
+	rhel/usr_lib_systemd_system_openvswitch.service \
+	$RPM_BUILD_ROOT%{_unitdir}/openvswitch.service
+install -p -D -m 0644 \
+	rhel/usr_lib_systemd_system_openvswitch-nonetwork.service \
+	$RPM_BUILD_ROOT%{_unitdir}/openvswitch-nonetwork.service
 
-install -p -D -m 0644 %{SOURCE1} $RPM_BUILD_ROOT%{_unitdir}/openvswitch.service
-install -p -D -m 0644 %{SOURCE7} $RPM_BUILD_ROOT%{_unitdir}/openvswitch-nonetwork.service
-install -p -D -m 0755 %{SOURCE2} $RPM_BUILD_ROOT%{_datadir}/openvswitch/scripts/openvswitch.init
+install -p -D -m 0755 rhel/etc_init.d_openvswitch \
+	$RPM_BUILD_ROOT%{_datadir}/openvswitch/scripts/openvswitch.init
+
 install -p -D -m 0644 %{SOURCE3} $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/openvswitch
 
 install -d -m 0755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/network-scripts/
-install -p -m 0755 %{SOURCE4} %{SOURCE5} $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/network-scripts/
+install -p -m 0755 rhel/etc_sysconfig_network-scripts_ifdown-ovs \
+	$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/network-scripts/ifdown-ovs
+install -p -m 0755 rhel/etc_sysconfig_network-scripts_ifup-ovs \
+	$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/network-scripts/ifup-ovs
 
 install -d -m 0755 $RPM_BUILD_ROOT/%{_sharedstatedir}/openvswitch
 
@@ -276,6 +285,10 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 
 
 %changelog
+* Wed Jan 15 2014 Flavio Leitner <fbl@redhat.com> - 2.0.0-3
+- fedora package: fix systemd ordering and deps.
+  (upstream commit b49c106ef00438b1c59876dad90d00e8d6e7b627)
+
 * Wed Jan 15 2014 Flavio Leitner <fbl@redhat.com> - 2.0.0-2
 - util: use gcc builtins to better check array sizes
   (upstream commit 878f1972909b33f27b32ad2ded208eb465b98a9b)
