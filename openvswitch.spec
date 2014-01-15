@@ -19,7 +19,7 @@
 
 Name:           openvswitch
 Version:        2.0.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -38,6 +38,8 @@ Source6:        ovsdbmonitor.desktop
 Source7:        openvswitch-nonetwork.service
 Source8:        sysconfig.template
 Source9:        README.RHEL
+
+Patch1: openvswitch-util-use-gcc-builtins-to-better-check-array-sizes.patch
 
 BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-zope-interface PyQt4
@@ -105,6 +107,7 @@ causing them to function as L2 MAC-learning switches or hub.
 
 %prep
 %setup -q
+%patch1 -p1
 
 %build
 %configure --enable-ssl --with-pkidir=%{_sharedstatedir}/openvswitch/pki
@@ -273,6 +276,10 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 
 
 %changelog
+* Wed Jan 15 2014 Flavio Leitner <fbl@redhat.com> - 2.0.0-2
+- util: use gcc builtins to better check array sizes
+  (upstream commit 878f1972909b33f27b32ad2ded208eb465b98a9b)
+
 * Mon Oct 28 2013 Flavio Leitner <fbl@redhat.com> - 2.0.0-1
 - updated to 2.0.0 (#1023184)
 
