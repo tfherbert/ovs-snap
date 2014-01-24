@@ -15,7 +15,7 @@
 
 Name:           openvswitch
 Version:        2.0.0
-Release:        4%{?dist}
+Release:        6%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -98,6 +98,15 @@ Simple reference implementation of an OpenFlow controller for Open
 vSwitch. Manages any number of remote switches over OpenFlow protocol,
 causing them to function as L2 MAC-learning switches or hub.
 
+%package devel
+Summary:        Open vSwitch OpenFlow development package (library, headers)
+License:        ASL 2.0
+Provides:       openvswitch-static = %{version}-%{release}
+
+%description devel
+This provides static library, libopenswitch.a and the openvswtich header
+files needed to build an external application.
+
 %prep
 %setup -q
 %patch1 -p1
@@ -162,6 +171,22 @@ rm -f $RPM_BUILD_ROOT%{_datadir}/applications/ovsdbmonitor.desktop
 rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 %endif
 
+# devel files
+install -p -D -m 0644 lib/libopenvswitch.a \
+	$RPM_BUILD_ROOT%{_libdir}/openvswitch/libopenvswitch.a
+
+install -d -m 0755 $RPM_BUILD_ROOT%{_includedir}/openvswitch
+install -p -D -m 0644 include/openvswitch/*.h \
+	-t $RPM_BUILD_ROOT%{_includedir}/openvswitch
+install -p -D -m 0644 config.h -t $RPM_BUILD_ROOT%{_includedir}/openvswitch
+
+install -d -m 0755 $RPM_BUILD_ROOT%{_includedir}/openvswitch/lib
+install -p -D -m 0644 lib/*.h \
+	-t $RPM_BUILD_ROOT%{_includedir}/openvswitch/lib
+
+install -d -m 0755 $RPM_BUILD_ROOT%{_includedir}/openflow
+install -p -D -m 0644 include/openflow/*.h \
+	-t $RPM_BUILD_ROOT%{_includedir}/openflow
 
 %post
 %if 0%{?systemd_post:1}
@@ -281,8 +306,16 @@ rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 %{_bindir}/ovs-controller
 %{_mandir}/man8/ovs-controller.8*
 
+%files devel
+%{_libdir}/openvswitch/libopenvswitch.a
+%{_includedir}/openvswitch/*
+%{_includedir}/openflow/*
 
 %changelog
+* Mon Jan 27 2014 Flavio Leitner - 2.0.0-6
+- create a -devel package
+  (from Chris Wright <chrisw@redhat.com>)
+
 * Wed Jan 15 2014 Flavio Leitner <fbl@redhat.com> - 2.0.0-5
 - Enable DHCP support for internal ports
   (upstream commit 490db96efaf89c63656b192d5ca287b0908a6c77)
