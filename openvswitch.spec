@@ -14,8 +14,8 @@
 %endif
 
 Name:           openvswitch
-Version:        2.0.0
-Release:        6%{?dist}
+Version:        2.0.1
+Release:        1%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -312,6 +312,9 @@ install -p -D -m 0644 include/openflow/*.h \
 %{_includedir}/openflow/*
 
 %changelog
+* Mon Jan 27 2014 Flavio Leitner - 2.0.1-1
+- updated to 2.0.1
+
 * Mon Jan 27 2014 Flavio Leitner - 2.0.0-6
 - create a -devel package
   (from Chris Wright <chrisw@redhat.com>)
