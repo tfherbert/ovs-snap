@@ -1,0 +1,38 @@
+From 691e47554dd03dd6492e00bab5bd6d215f5cbd4f Mon Sep 17 00:00:00 2001
+From: Flavio Leitner <fbl@redhat.com>
+Date: Thu, 27 Feb 2014 09:16:34 -0300
+Subject: [PATCH] ovs-lib: allow non-root users to check service status
+
+It tries to log the status operation, so although non-root
+users can see the current status, the lack of permission
+to write to the log results in an error message.
+
+This changes to log only if the user has the permission to
+write to the log file.
+
+Signed-off-by: Flavio Leitner <fbl@redhat.com>
+Signed-off-by: Gurucharan Shetty <gshetty@nicira.com>
+---
+ utilities/ovs-lib.in | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/utilities/ovs-lib.in b/utilities/ovs-lib.in
+index 029ed3b..48d0c36 100644
+--- a/utilities/ovs-lib.in
++++ b/utilities/ovs-lib.in
+@@ -54,7 +54,11 @@ ovs_ctl () {
+             # of ovs-ctl. It is also useful to document the o/p in ovs-ctl.log.
+             display=`"${datadir}/scripts/ovs-ctl" "$@" 2>&1`
+             rc=$?
+-            echo "${display}" | tee -a "${logdir}/ovs-ctl.log"
++            if test -w "${logdir}/ovs-ctl.log"; then
++                 echo "${display}" | tee -a "${logdir}/ovs-ctl.log"
++            else
++                 echo "${display}"
++            fi
+             return ${rc}
+         ;;
+         *)
+-- 
+1.8.5.3
+

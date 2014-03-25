@@ -14,7 +14,7 @@
 %endif
 
 Name:           openvswitch
-Version:        2.0.1
+Version:        2.1.0
 Release:        1%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
@@ -29,11 +29,14 @@ Source3:        openvswitch.logrotate
 Source6:        ovsdbmonitor.desktop
 Source9:        README.RHEL
 
-Patch1: openvswitch-util-use-gcc-builtins-to-better-check-array-sizes.patch
-Patch2: openvswitch-fedora-package-fix-systemd-ordering-and-deps.patch
-Patch3: openvswitch-initscripts-add-tunnel-support.patch
-Patch4: openvswitch-rhel-Enable-DHCP-support-for-internal-ports.patch
+Patch1: openvswitch-fedora-package-fix-systemd-ordering-and-deps.patch
+Patch2: openvswitch-rhel-Enable-DHCP-support-for-internal-ports.patch
+Patch3: openvswitch-bridge-don-t-bring-up-internal-ports-by-default.patch
+Patch4: openvswitch-ovs-lib-allow-non-root-users-to-check-service-status.patch
+Patch5: openvswitch-rhel-Add-Patch-Port-support-to-initscripts.patch
 
+
+BuildRequires:  autoconf
 BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-zope-interface PyQt4
 BuildRequires:  desktop-file-utils
@@ -42,11 +45,13 @@ BuildRequires:  groff graphviz
 BuildRequires:  python-twisted-conch
 %endif
 
-Requires:       openssl iproute module-init-tools
+Requires: openssl iproute module-init-tools
+Requires: kernel >= 3.15.0-0
 
 Requires(post): systemd-units
 Requires(preun): systemd-units
 Requires(postun): systemd-units
+Obsoletes: openvswitch-controller <= 0:2.1.0-1
 
 %description
 Open vSwitch provides standard network bridging functions and
@@ -88,16 +93,6 @@ Requires:       python python-twisted-core python-twisted-web
 Utilities that are useful to diagnose performance and connectivity
 issues in Open vSwitch setup.
 
-%package controller
-Summary:        Open vSwitch OpenFlow controller
-License:        ASL 2.0
-Requires:       openvswitch = %{version}-%{release}
-
-%description controller
-Simple reference implementation of an OpenFlow controller for Open
-vSwitch. Manages any number of remote switches over OpenFlow protocol,
-causing them to function as L2 MAC-learning switches or hub.
-
 %package devel
 Summary:        Open vSwitch OpenFlow development package (library, headers)
 License:        ASL 2.0
@@ -113,6 +108,7 @@ files needed to build an external application.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%patch5 -p1
 
 %build
 %configure --enable-ssl --with-pkidir=%{_sharedstatedir}/openvswitch/pki
@@ -170,10 +166,6 @@ rm -rf $RPM_BUILD_ROOT%{_datadir}/ovsdbmonitor
 rm -f $RPM_BUILD_ROOT%{_datadir}/applications/ovsdbmonitor.desktop
 rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
 %endif
-
-# devel files
-install -p -D -m 0644 lib/libopenvswitch.a \
-	$RPM_BUILD_ROOT%{_libdir}/openvswitch/libopenvswitch.a
 
 install -d -m 0755 $RPM_BUILD_ROOT%{_includedir}/openvswitch
 install -p -D -m 0644 include/openvswitch/*.h \
@@ -251,6 +243,7 @@ install -p -D -m 0644 include/openflow/*.h \
 %{_bindir}/ovsdb-client
 %{_bindir}/ovsdb-tool
 %{_bindir}/ovs-parse-backtrace
+%{_bindir}/vtep-ctl
 # ovs-bugtool is LGPLv2+
 %{_sbindir}/ovs-bugtool
 %{_sbindir}/ovs-vswitchd
@@ -262,6 +255,8 @@ install -p -D -m 0644 include/openflow/*.h \
 %{_mandir}/man1/ovsdb-server.1*
 %{_mandir}/man1/ovsdb-tool.1*
 %{_mandir}/man5/ovs-vswitchd.conf.db.5*
+%{_mandir}/man5/vtep.5*
+%{_mandir}/man8/vtep-ctl.8*
 %{_mandir}/man8/ovs-appctl.8*
 %{_mandir}/man8/ovs-bugtool.8*
 %{_mandir}/man8/ovs-ctl.8*
@@ -302,16 +297,24 @@ install -p -D -m 0644 include/openflow/*.h \
 %{_mandir}/man8/ovs-l3ping.8*
 %{python_sitelib}/ovstest
 
-%files controller
-%{_bindir}/ovs-controller
-%{_mandir}/man8/ovs-controller.8*
-
 %files devel
-%{_libdir}/openvswitch/libopenvswitch.a
+%{_libdir}/*.a
+%{_libdir}/*.la
 %{_includedir}/openvswitch/*
 %{_includedir}/openflow/*
 
 %changelog
+* Tue Mar 25 2014 Flavio Leitner - 2.1.0-1
+- updated to 2.1.0
+- obsoleted openvswitch-controller package
+- requires kernel 3.15.0-0 or newer
+  (kernel commit 4f647e0a3c37b8d5086214128614a136064110c3
+   openvswitch: fix a possible deadlock and lockdep warning)
+- ovs-lib: allow non-root users to check service status
+  (upstream commit 691e47554dd03dd6492e00bab5bd6d215f5cbd4f)
+- rhel: Add Patch Port support to initscripts
+  (upstream commit e2bcc8ef49f5e51f48983b87ab1010f0f9ab1454)
+
 * Mon Jan 27 2014 Flavio Leitner - 2.0.1-1
 - updated to 2.0.1
 
