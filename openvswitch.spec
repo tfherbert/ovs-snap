@@ -14,7 +14,7 @@
 %endif
 
 Name:           openvswitch
-Version:        2.1.0
+Version:        2.1.2
 Release:        1%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
@@ -30,7 +30,6 @@ Source6:        ovsdbmonitor.desktop
 Source9:        README.RHEL
 
 Patch1: openvswitch-fedora-package-fix-systemd-ordering-and-deps.patch
-Patch2: openvswitch-rhel-Enable-DHCP-support-for-internal-ports.patch
 Patch3: openvswitch-bridge-don-t-bring-up-internal-ports-by-default.patch
 Patch4: openvswitch-ovs-lib-allow-non-root-users-to-check-service-status.patch
 Patch5: openvswitch-rhel-Add-Patch-Port-support-to-initscripts.patch
@@ -105,7 +104,6 @@ files needed to build an external application.
 %prep
 %setup -q
 %patch1 -p1
-%patch2 -p1
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
@@ -304,6 +302,9 @@ install -p -D -m 0644 include/openflow/*.h \
 %{_includedir}/openflow/*
 
 %changelog
+* Tue Mar 25 2014 Flavio Leitner - 2.1.2-1
+- updated to 2.1.2
+
 * Tue Mar 25 2014 Flavio Leitner - 2.1.0-1
 - updated to 2.1.0
 - obsoleted openvswitch-controller package
