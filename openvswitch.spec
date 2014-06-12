@@ -1,21 +1,9 @@
 %global _hardened_build 1
 
 
-# This provides a way for distros that doesn't provide
-# python-twisted-conch to disable building of ovsdbmonitor
-# by default. You can override by passing --with ovsdbmonitor
-# or --without ovsdbmonitor while building the RPM.
-%define _pkg_ovsdbmonitor 0
-
-%if %{?_with_ovsdbmonitor: 1}%{!?_with_ovsdbmonitor: 0}
-%define with_ovsdbmonitor 1
-%else
-%define with_ovsdbmonitor %{?_without_ovsdbmonitor: 0}%{!?_without_ovsdbmonitor: %{_pkg_ovsdbmonitor}}
-%endif
-
 Name:           openvswitch
 Version:        2.1.2
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -26,7 +14,6 @@ License:        ASL 2.0 and LGPLv2+ and SISSL
 URL:            http://openvswitch.org
 Source0:        http://openvswitch.org/releases/%{name}-%{version}.tar.gz
 Source3:        openvswitch.logrotate
-Source6:        ovsdbmonitor.desktop
 Source9:        README.RHEL
 
 Patch1: openvswitch-fedora-package-fix-systemd-ordering-and-deps.patch
@@ -40,9 +27,6 @@ BuildRequires:  systemd-units openssl openssl-devel
 BuildRequires:  python python-twisted-core python-zope-interface PyQt4
 BuildRequires:  desktop-file-utils
 BuildRequires:  groff graphviz
-%if %{with_ovsdbmonitor}
-BuildRequires:  python-twisted-conch
-%endif
 
 Requires: openssl iproute module-init-tools
 Requires: kernel >= 3.15.0-0
@@ -65,21 +49,6 @@ Requires:       python
 
 %description -n python-openvswitch
 Python bindings for the Open vSwitch database
-
-%if %{with_ovsdbmonitor}
-%package -n ovsdbmonitor
-Summary:        Open vSwitch graphical monitoring tool
-License:        ASL 2.0
-BuildArch:      noarch
-Requires:       python-openvswitch = %{version}-%{release}
-Requires:       python python-twisted-core python-twisted-conch python-zope-interface PyQt4
-
-%description -n ovsdbmonitor
-A GUI tool for monitoring and troubleshooting local or remote Open
-vSwitch installations.  It presents GUI tables that graphically represent
-an Open vSwitch kernel flow table (similar to "ovs-dpctl dump-flows")
-and Open vSwitch database contents (similar to "ovs-vsctl list <table>").
-%endif
 
 %package test
 Summary:        Open vSwitch testing utilities
@@ -154,16 +123,6 @@ rm -f \
     $RPM_BUILD_ROOT%{_mandir}/man8/ovs-vlan-bug-workaround.8 \
     $RPM_BUILD_ROOT%{_sbindir}/ovs-brcompatd \
     $RPM_BUILD_ROOT%{_mandir}/man8/ovs-brcompatd.8
-
-desktop-file-install --dir=$RPM_BUILD_ROOT%{_datadir}/applications %{SOURCE6}
-
-%if ! %{with_ovsdbmonitor}
-rm -f $RPM_BUILD_ROOT%{_bindir}/ovsdbmonitor
-rm -f $RPM_BUILD_ROOT%{_mandir}/man1/ovsdbmonitor.1*
-rm -rf $RPM_BUILD_ROOT%{_datadir}/ovsdbmonitor
-rm -f $RPM_BUILD_ROOT%{_datadir}/applications/ovsdbmonitor.desktop
-rm -rf $RPM_BUILD_ROOT%{_docdir}/ovsdbmonitor
-%endif
 
 install -d -m 0755 $RPM_BUILD_ROOT%{_includedir}/openvswitch
 install -p -D -m 0644 include/openvswitch/*.h \
@@ -277,15 +236,6 @@ install -p -D -m 0644 include/openflow/*.h \
 %{python_sitelib}/ovs
 %doc COPYING
 
-%if %{with_ovsdbmonitor}
-%files -n ovsdbmonitor
-%{_bindir}/ovsdbmonitor
-%{_mandir}/man1/ovsdbmonitor.1*
-%{_datadir}/ovsdbmonitor
-%{_datadir}/applications/ovsdbmonitor.desktop
-%doc ovsdb/ovsdbmonitor/COPYING
-%endif
-
 %files test
 %{_bindir}/ovs-test
 %{_bindir}/ovs-vlan-test
@@ -302,6 +252,9 @@ install -p -D -m 0644 include/openflow/*.h \
 %{_includedir}/openflow/*
 
 %changelog
+* Thu Jun 12 2014 Flavio Leitner - 2.1.2-3
+- removed ovsdbmonitor packaging
+
 * Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.1.2-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
 
