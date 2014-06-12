@@ -3,7 +3,7 @@
 
 Name:           openvswitch
 Version:        2.1.2
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -15,6 +15,8 @@ URL:            http://openvswitch.org
 Source0:        http://openvswitch.org/releases/%{name}-%{version}.tar.gz
 Source3:        openvswitch.logrotate
 Source9:        README.RHEL
+
+ExcludeArch: ppc
 
 Patch1: openvswitch-fedora-package-fix-systemd-ordering-and-deps.patch
 Patch3: openvswitch-bridge-don-t-bring-up-internal-ports-by-default.patch
@@ -114,8 +116,8 @@ install -d -m 0755 $RPM_BUILD_ROOT%{python_sitelib}
 mv $RPM_BUILD_ROOT/%{_datadir}/openvswitch/python/* $RPM_BUILD_ROOT%{python_sitelib}
 rmdir $RPM_BUILD_ROOT/%{_datadir}/openvswitch/python/
 
-mkdir -p $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
-install -p -m 0644 %{SOURCE9} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}
+mkdir -p $RPM_BUILD_ROOT%{_docdir}/%{name}
+install -p -m 0644 %{SOURCE9} $RPM_BUILD_ROOT%{_docdir}/%{name}
 
 # Get rid of stuff we don't want to make RPM happy.
 rm -f \
@@ -228,9 +230,9 @@ install -p -D -m 0644 include/openflow/*.h \
 # /usr/share/openvswitch/scripts/ovs-bugtool* are LGPLv2+
 %{_datadir}/openvswitch/
 %{_sharedstatedir}/openvswitch
-%{_docdir}/%{name}-%{version}/README.RHEL
+%{_docdir}/%{name}/README.RHEL
 # see COPYING for full licensing details
-%doc COPYING DESIGN INSTALL.SSL NOTICE README WHY-OVS
+%doc COPYING DESIGN INSTALL.SSL NOTICE README WHY-OVS FAQ NEWS
 
 %files -n python-openvswitch
 %{python_sitelib}/ovs
@@ -252,6 +254,11 @@ install -p -D -m 0644 include/openflow/*.h \
 %{_includedir}/openflow/*
 
 %changelog
+* Thu Jun 12 2014 Flavio Leitner - 2.1.2-4
+- moved README.RHEL to be in the standard doc dir.
+- added FAQ and NEWS files to the doc list.
+- excluded PPC arch
+
 * Thu Jun 12 2014 Flavio Leitner - 2.1.2-3
 - removed ovsdbmonitor packaging
 
