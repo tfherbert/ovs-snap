@@ -3,7 +3,7 @@
 
 Name:           openvswitch
 Version:        2.1.2
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -254,6 +254,9 @@ install -p -D -m 0644 include/openflow/*.h \
 %{_includedir}/openflow/*
 
 %changelog
+* Sun Aug 17 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.1.2-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
+
 * Thu Jun 12 2014 Flavio Leitner - 2.1.2-4
 - moved README.RHEL to be in the standard doc dir.
 - added FAQ and NEWS files to the doc list.
