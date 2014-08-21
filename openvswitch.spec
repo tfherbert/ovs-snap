@@ -1,34 +1,30 @@
 %global _hardened_build 1
 
+# If wants to run tests while building, specify the '--with check'
+# option. For example:
+# rpmbuild -bb --with check openvswitch.spec
 
-Name:           openvswitch
-Version:        2.1.2
-Release:        5%{?dist}
-Summary:        Open vSwitch daemon/database/utilities
+Name: openvswitch
+Version: 2.3.0
+Release: 1%{?dist}
+Summary: Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
 # lib/sflow*.[ch] files are SISSL
 # datapath/ is GPLv2 (although not built into any of the binary packages)
 # python/compat is Python (although not built into any of the binary packages)
-License:        ASL 2.0 and LGPLv2+ and SISSL
-URL:            http://openvswitch.org
-Source0:        http://openvswitch.org/releases/%{name}-%{version}.tar.gz
-Source3:        openvswitch.logrotate
-Source9:        README.RHEL
+License: ASL 2.0 and LGPLv2+ and SISSL
+URL: http://openvswitch.org
+Source0: http://openvswitch.org/releases/%{name}-%{version}.tar.gz
+Source3: openvswitch.logrotate
 
 ExcludeArch: ppc
 
-Patch1: openvswitch-fedora-package-fix-systemd-ordering-and-deps.patch
-Patch3: openvswitch-bridge-don-t-bring-up-internal-ports-by-default.patch
-Patch4: openvswitch-ovs-lib-allow-non-root-users-to-check-service-status.patch
-Patch5: openvswitch-rhel-Add-Patch-Port-support-to-initscripts.patch
-
-
-BuildRequires:  autoconf
-BuildRequires:  systemd-units openssl openssl-devel
-BuildRequires:  python python-twisted-core python-zope-interface PyQt4
-BuildRequires:  desktop-file-utils
-BuildRequires:  groff graphviz
+BuildRequires: autoconf
+BuildRequires: systemd-units openssl openssl-devel
+BuildRequires: python python-twisted-core python-zope-interface PyQt4
+BuildRequires: desktop-file-utils
+BuildRequires: groff graphviz
 
 Requires: openssl iproute module-init-tools
 Requires: kernel >= 3.15.0-0
@@ -38,35 +34,37 @@ Requires(preun): systemd-units
 Requires(postun): systemd-units
 Obsoletes: openvswitch-controller <= 0:2.1.0-1
 
+%bcond_with check
+
 %description
 Open vSwitch provides standard network bridging functions and
 support for the OpenFlow protocol for remote per-flow control of
 traffic.
 
 %package -n python-openvswitch
-Summary:        Open vSwitch python bindings
-License:        ASL 2.0
-BuildArch:      noarch
-Requires:       python
+Summary: Open vSwitch python bindings
+License: ASL 2.0
+BuildArch: noarch
+Requires: python
 
 %description -n python-openvswitch
 Python bindings for the Open vSwitch database
 
 %package test
-Summary:        Open vSwitch testing utilities
-License:        ASL 2.0
-BuildArch:      noarch
-Requires:       python-openvswitch = %{version}-%{release}
-Requires:       python python-twisted-core python-twisted-web
+Summary: Open vSwitch testing utilities
+License: ASL 2.0
+BuildArch: noarch
+Requires: python-openvswitch = %{version}-%{release}
+Requires: python python-twisted-core python-twisted-web
 
 %description test
 Utilities that are useful to diagnose performance and connectivity
 issues in Open vSwitch setup.
 
 %package devel
-Summary:        Open vSwitch OpenFlow development package (library, headers)
-License:        ASL 2.0
-Provides:       openvswitch-static = %{version}-%{release}
+Summary: Open vSwitch OpenFlow development package (library, headers)
+License: ASL 2.0
+Provides: openvswitch-static = %{version}-%{release}
 
 %description devel
 This provides static library, libopenswitch.a and the openvswtich header
@@ -74,10 +72,6 @@ files needed to build an external application.
 
 %prep
 %setup -q
-%patch1 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
 
 %build
 %configure --enable-ssl --with-pkidir=%{_sharedstatedir}/openvswitch/pki
@@ -115,9 +109,6 @@ install -d -m 0755 $RPM_BUILD_ROOT/%{_sharedstatedir}/openvswitch
 install -d -m 0755 $RPM_BUILD_ROOT%{python_sitelib}
 mv $RPM_BUILD_ROOT/%{_datadir}/openvswitch/python/* $RPM_BUILD_ROOT%{python_sitelib}
 rmdir $RPM_BUILD_ROOT/%{_datadir}/openvswitch/python/
-
-mkdir -p $RPM_BUILD_ROOT%{_docdir}/%{name}
-install -p -m 0644 %{SOURCE9} $RPM_BUILD_ROOT%{_docdir}/%{name}
 
 # Get rid of stuff we don't want to make RPM happy.
 rm -f \
@@ -182,6 +173,16 @@ install -p -D -m 0644 include/openflow/*.h \
     fi
 %endif
 
+%check
+%if %{with check}
+    if make check TESTSUITEFLAGS='%{_smp_mflags}' ||
+       make check TESTSUITEFLAGS='--recheck'; then :;
+    else
+        cat tests/testsuite.log
+        exit 1
+    fi
+%endif
+
 %files
 %{_sysconfdir}/openvswitch/
 %config(noreplace) %{_sysconfdir}/logrotate.d/openvswitch
@@ -230,9 +231,9 @@ install -p -D -m 0644 include/openflow/*.h \
 # /usr/share/openvswitch/scripts/ovs-bugtool* are LGPLv2+
 %{_datadir}/openvswitch/
 %{_sharedstatedir}/openvswitch
-%{_docdir}/%{name}/README.RHEL
 # see COPYING for full licensing details
-%doc COPYING DESIGN INSTALL.SSL NOTICE README WHY-OVS FAQ NEWS
+%doc COPYING DESIGN INSTALL.SSL NOTICE README WHY-OVS rhel/README.RHEL
+%doc FAQ NEWS INSTALL.DPDK
 
 %files -n python-openvswitch
 %{python_sitelib}/ovs
@@ -254,6 +255,9 @@ install -p -D -m 0644 include/openflow/*.h \
 %{_includedir}/openflow/*
 
 %changelog
+* Tue Aug 19 2014 Flavio Leitner - 2.3.0-1
+- updated to 2.3.0
+
 * Sun Aug 17 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.1.2-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
 
