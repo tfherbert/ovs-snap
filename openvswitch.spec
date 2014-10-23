@@ -6,7 +6,7 @@
 
 Name: openvswitch
 Version: 2.3.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -130,6 +130,9 @@ install -d -m 0755 $RPM_BUILD_ROOT%{_includedir}/openflow
 install -p -D -m 0644 include/openflow/*.h \
 	-t $RPM_BUILD_ROOT%{_includedir}/openflow
 
+touch $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch/conf.db
+touch $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch/system-id.conf
+
 %post
 %if 0%{?systemd_post:1}
     %systemd_post %{name}.service
@@ -185,6 +188,8 @@ install -p -D -m 0644 include/openflow/*.h \
 
 %files
 %{_sysconfdir}/openvswitch/
+%config %ghost %{_sysconfdir}/openvswitch/conf.db
+%config %ghost %{_sysconfdir}/openvswitch/system-id.conf
 %config(noreplace) %{_sysconfdir}/logrotate.d/openvswitch
 %config(noreplace) %{_sysconfdir}/sysconfig/openvswitch
 %{_sysconfdir}/sysconfig/network-scripts/ifup-ovs
@@ -255,6 +260,10 @@ install -p -D -m 0644 include/openflow/*.h \
 %{_includedir}/openflow/*
 
 %changelog
+* Thu Oct 23 2014 Flavio Leitner - 2.3.0-2
+- fixed to own conf.db and system-id.conf in /etc/openvswitch.
+  (#1132707)
+
 * Tue Aug 19 2014 Flavio Leitner - 2.3.0-1
 - updated to 2.3.0
 
