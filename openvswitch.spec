@@ -1,12 +1,27 @@
 %global _hardened_build 1
 
+# Uncomment these for snapshot releases:
+# snapshot is the date YYYYMMDD of the snapshot
+# snap_git is the 8 git sha digits of the last commit
+# You must edit configure.ac and downgrade the version from
+# the development one to the stable one to not confuse RPM
+# during future upgrades.
+# Steps:
+# 1. Checkout the git branch
+# 2. Change version in configure.ac to be <stable version>-git<8sha>
+# 3. Run: ./boot.sh
+# 4. Run: ./configure.sh
+# 5. Run: make dist
+%define snapshot .git20141107
+%define snap_gitsha -git39ebb203
+
 # If wants to run tests while building, specify the '--with check'
 # option. For example:
 # rpmbuild -bb --with check openvswitch.spec
 
 Name: openvswitch
 Version: 2.3.0
-Release: 2%{?dist}
+Release: 3%{?snapshot}%{?dist}
 Summary: Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -15,8 +30,7 @@ Summary: Open vSwitch daemon/database/utilities
 # python/compat is Python (although not built into any of the binary packages)
 License: ASL 2.0 and LGPLv2+ and SISSL
 URL: http://openvswitch.org
-Source0: http://openvswitch.org/releases/%{name}-%{version}.tar.gz
-Source3: openvswitch.logrotate
+Source0: http://openvswitch.org/releases/%{name}-%{version}%{?snap_gitsha}.tar.gz
 
 ExcludeArch: ppc
 
@@ -27,6 +41,7 @@ BuildRequires: desktop-file-utils
 BuildRequires: groff graphviz
 
 Requires: openssl iproute module-init-tools
+#Upstream kernel commit 4f647e0a3c37b8d5086214128614a136064110c3
 Requires: kernel >= 3.15.0-0
 
 Requires(post): systemd-units
@@ -67,71 +82,96 @@ License: ASL 2.0
 Provides: openvswitch-static = %{version}-%{release}
 
 %description devel
-This provides static library, libopenswitch.a and the openvswtich header
+This provides static library, libopenswitch.a and the openvswitch header
 files needed to build an external application.
 
+
 %prep
-%setup -q
+%setup -q -n %{name}-%{version}%{?snap_gitsha}
 
 %build
 %configure --enable-ssl --with-pkidir=%{_sharedstatedir}/openvswitch/pki
 make %{?_smp_mflags}
 
-
 %install
+rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 
 install -d -m 0755 $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch
 
 install -p -D -m 0644 \
-	rhel/usr_share_openvswitch_scripts_systemd_sysconfig.template \
-	$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/openvswitch
+        rhel/usr_share_openvswitch_scripts_systemd_sysconfig.template \
+        $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/openvswitch
 install -p -D -m 0644 \
-	rhel/usr_lib_systemd_system_openvswitch.service \
-	$RPM_BUILD_ROOT%{_unitdir}/openvswitch.service
+        rhel/usr_lib_systemd_system_openvswitch.service \
+        $RPM_BUILD_ROOT%{_unitdir}/openvswitch.service
 install -p -D -m 0644 \
-	rhel/usr_lib_systemd_system_openvswitch-nonetwork.service \
-	$RPM_BUILD_ROOT%{_unitdir}/openvswitch-nonetwork.service
+        rhel/usr_lib_systemd_system_openvswitch-nonetwork.service \
+        $RPM_BUILD_ROOT%{_unitdir}/openvswitch-nonetwork.service
 
-install -p -D -m 0755 rhel/etc_init.d_openvswitch \
-	$RPM_BUILD_ROOT%{_datadir}/openvswitch/scripts/openvswitch.init
+install -m 0755 rhel/etc_init.d_openvswitch \
+        $RPM_BUILD_ROOT%{_datadir}/openvswitch/scripts/openvswitch.init
 
-install -p -D -m 0644 %{SOURCE3} $RPM_BUILD_ROOT%{_sysconfdir}/logrotate.d/openvswitch
+install -p -D -m 0644 rhel/etc_logrotate.d_openvswitch \
+        $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/openvswitch
 
-install -d -m 0755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/network-scripts/
+install -m 0644 vswitchd/vswitch.ovsschema \
+        $RPM_BUILD_ROOT/%{_datadir}/openvswitch/vswitch.ovsschema
+
+install -d -m 0755 $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/network-scripts/
 install -p -m 0755 rhel/etc_sysconfig_network-scripts_ifdown-ovs \
-	$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/network-scripts/ifdown-ovs
+        $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/network-scripts/ifdown-ovs
 install -p -m 0755 rhel/etc_sysconfig_network-scripts_ifup-ovs \
-	$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/network-scripts/ifup-ovs
+        $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/network-scripts/ifup-ovs
+
+install -d -m 0755 $RPM_BUILD_ROOT%{python_sitelib}
+mv $RPM_BUILD_ROOT/%{_datadir}/openvswitch/python/* \
+   $RPM_BUILD_ROOT%{python_sitelib}
+rmdir $RPM_BUILD_ROOT/%{_datadir}/openvswitch/python/
 
 install -d -m 0755 $RPM_BUILD_ROOT/%{_sharedstatedir}/openvswitch
 
-install -d -m 0755 $RPM_BUILD_ROOT%{python_sitelib}
-mv $RPM_BUILD_ROOT/%{_datadir}/openvswitch/python/* $RPM_BUILD_ROOT%{python_sitelib}
-rmdir $RPM_BUILD_ROOT/%{_datadir}/openvswitch/python/
-
-# Get rid of stuff we don't want to make RPM happy.
-rm -f \
-    $RPM_BUILD_ROOT%{_sbindir}/ovs-vlan-bug-workaround \
-    $RPM_BUILD_ROOT%{_mandir}/man8/ovs-vlan-bug-workaround.8 \
-    $RPM_BUILD_ROOT%{_sbindir}/ovs-brcompatd \
-    $RPM_BUILD_ROOT%{_mandir}/man8/ovs-brcompatd.8
-
 install -d -m 0755 $RPM_BUILD_ROOT%{_includedir}/openvswitch
 install -p -D -m 0644 include/openvswitch/*.h \
-	-t $RPM_BUILD_ROOT%{_includedir}/openvswitch
-install -p -D -m 0644 config.h -t $RPM_BUILD_ROOT%{_includedir}/openvswitch
+        -t $RPM_BUILD_ROOT%{_includedir}/openvswitch
+install -p -D -m 0644 config.h \
+        -t $RPM_BUILD_ROOT%{_includedir}/openvswitch
 
 install -d -m 0755 $RPM_BUILD_ROOT%{_includedir}/openvswitch/lib
 install -p -D -m 0644 lib/*.h \
-	-t $RPM_BUILD_ROOT%{_includedir}/openvswitch/lib
+        -t $RPM_BUILD_ROOT%{_includedir}/openvswitch/lib
 
 install -d -m 0755 $RPM_BUILD_ROOT%{_includedir}/openflow
 install -p -D -m 0644 include/openflow/*.h \
-	-t $RPM_BUILD_ROOT%{_includedir}/openflow
+        -t $RPM_BUILD_ROOT%{_includedir}/openflow
 
 touch $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch/conf.db
 touch $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch/system-id.conf
+
+%check
+%if %{with check}
+    if make check TESTSUITEFLAGS='%{_smp_mflags}' ||
+       make check TESTSUITEFLAGS='--recheck'; then :;
+    else
+        cat tests/testsuite.log
+        exit 1
+    fi
+%endif
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%preun
+%if 0%{?systemd_preun:1}
+    %systemd_preun %{name}.service
+%else
+    if [ $1 -eq 0 ] ; then
+    # Package removal, not upgrade
+        /bin/systemctl --no-reload disable %{name}.service >/dev/null 2>&1 || :
+        /bin/systemctl stop %{name}.service >/dev/null 2>&1 || :
+    fi
+%endif
+
 
 %post
 %if 0%{?systemd_post:1}
@@ -154,17 +194,6 @@ touch $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch/system-id.conf
 /sbin/chkconfig --del %{name} >/dev/null 2>&1 || :
 /bin/systemctl try-restart %{name}.service >/dev/null 2>&1 || :
 
-%preun
-%if 0%{?systemd_preun:1}
-    %systemd_preun %{name}.service
-%else
-    if [ $1 -eq 0 ] ; then
-    # Package removal, not upgrade
-        /bin/systemctl --no-reload disable %{name}.service >/dev/null 2>&1 || :
-        /bin/systemctl stop %{name}.service >/dev/null 2>&1 || :
-    fi
-%endif
-
 %postun
 %if 0%{?systemd_postun_with_restart:1}
     %systemd_postun_with_restart %{name}.service
@@ -176,40 +205,57 @@ touch $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch/system-id.conf
     fi
 %endif
 
-%check
-%if %{with check}
-    if make check TESTSUITEFLAGS='%{_smp_mflags}' ||
-       make check TESTSUITEFLAGS='--recheck'; then :;
-    else
-        cat tests/testsuite.log
-        exit 1
-    fi
-%endif
+
+%files -n python-openvswitch
+%{python_sitelib}/ovs
+%doc COPYING
+
+%files test
+%{_bindir}/ovs-test
+%{_bindir}/ovs-vlan-test
+%{_bindir}/ovs-l3ping
+%{_mandir}/man8/ovs-test.8*
+%{_mandir}/man8/ovs-vlan-test.8*
+%{_mandir}/man8/ovs-l3ping.8*
+%{python_sitelib}/ovstest
+
+%files devel
+%{_libdir}/*.a
+%{_libdir}/*.la
+%{_includedir}/openvswitch/*
+%{_includedir}/openflow/*
 
 %files
-%{_sysconfdir}/openvswitch/
+%defattr(-,root,root)
+%dir %{_sysconfdir}/openvswitch
 %config %ghost %{_sysconfdir}/openvswitch/conf.db
 %config %ghost %{_sysconfdir}/openvswitch/system-id.conf
-%config(noreplace) %{_sysconfdir}/logrotate.d/openvswitch
 %config(noreplace) %{_sysconfdir}/sysconfig/openvswitch
-%{_sysconfdir}/sysconfig/network-scripts/ifup-ovs
-%{_sysconfdir}/sysconfig/network-scripts/ifdown-ovs
+%config(noreplace) %{_sysconfdir}/logrotate.d/openvswitch
 %{_unitdir}/openvswitch.service
 %{_unitdir}/openvswitch-nonetwork.service
+%{_datadir}/openvswitch/scripts/openvswitch.init
+%{_sysconfdir}/sysconfig/network-scripts/ifup-ovs
+%{_sysconfdir}/sysconfig/network-scripts/ifdown-ovs
+%{_datadir}/openvswitch/bugtool-plugins/
+%{_datadir}/openvswitch/scripts/ovs-bugtool-*
+%{_datadir}/openvswitch/scripts/ovs-check-dead-ifs
+%{_datadir}/openvswitch/scripts/ovs-lib
+%{_datadir}/openvswitch/scripts/ovs-vtep
+%{_datadir}/openvswitch/scripts/ovs-ctl
+%config %{_datadir}/openvswitch/vswitch.ovsschema
+%config %{_datadir}/openvswitch/vtep.ovsschema
 %{_bindir}/ovs-appctl
-%{_bindir}/ovs-benchmark
+#%{_bindir}/ovs-docker
 %{_bindir}/ovs-dpctl
 %{_bindir}/ovs-dpctl-top
 %{_bindir}/ovs-ofctl
-%{_bindir}/ovs-pcap
-%{_bindir}/ovs-pki
-%{_bindir}/ovs-tcpundump
 %{_bindir}/ovs-vsctl
 %{_bindir}/ovsdb-client
 %{_bindir}/ovsdb-tool
-%{_bindir}/ovs-parse-backtrace
+#%{_bindir}/ovs-testcontroller
+%{_bindir}/ovs-pki
 %{_bindir}/vtep-ctl
-# ovs-bugtool is LGPLv2+
 %{_sbindir}/ovs-bugtool
 %{_sbindir}/ovs-vswitchd
 %{_sbindir}/ovsdb-server
@@ -232,34 +278,26 @@ touch $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch/system-id.conf
 %{_mandir}/man8/ovs-vsctl.8*
 %{_mandir}/man8/ovs-vswitchd.8*
 %{_mandir}/man8/ovs-parse-backtrace.8*
-# /usr/share/openvswitch/bugtool-plugins and
-# /usr/share/openvswitch/scripts/ovs-bugtool* are LGPLv2+
-%{_datadir}/openvswitch/
-%{_sharedstatedir}/openvswitch
-# see COPYING for full licensing details
-%doc COPYING DESIGN INSTALL.SSL NOTICE README WHY-OVS rhel/README.RHEL
-%doc FAQ NEWS INSTALL.DPDK
-
-%files -n python-openvswitch
-%{python_sitelib}/ovs
-%doc COPYING
-
-%files test
-%{_bindir}/ovs-test
-%{_bindir}/ovs-vlan-test
-%{_bindir}/ovs-l3ping
-%{_mandir}/man8/ovs-test.8*
-%{_mandir}/man8/ovs-vlan-test.8*
-%{_mandir}/man8/ovs-l3ping.8*
-%{python_sitelib}/ovstest
-
-%files devel
-%{_libdir}/*.a
-%{_libdir}/*.la
-%{_includedir}/openvswitch/*
-%{_includedir}/openflow/*
+#%{_mandir}/man8/ovs-testcontroller.8*
+%doc COPYING DESIGN INSTALL.SSL NOTICE README WHY-OVS
+%doc FAQ NEWS INSTALL.DPDK rhel/README.RHEL
+/var/lib/openvswitch
+/var/log/openvswitch
+%exclude %{_bindir}/ovs-benchmark
+%exclude %{_bindir}/ovs-parse-backtrace
+%exclude %{_bindir}/ovs-pcap
+%exclude %{_bindir}/ovs-tcpundump
+%exclude %{_sbindir}/ovs-vlan-bug-workaround
+%exclude %{_mandir}/man1/ovs-benchmark.1.gz
+%exclude %{_mandir}/man1/ovs-pcap.1.gz
+%exclude %{_mandir}/man1/ovs-tcpundump.1.gz
+%exclude %{_mandir}/man8/ovs-vlan-bug-workaround.8.gz
+%exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Fri Nov 07 2014 Flavio Leitner - 2.3.0-3.git20141107
+- updated to 2.3.0-git39ebb203
+
 * Thu Oct 23 2014 Flavio Leitner - 2.3.0-2
 - fixed to own conf.db and system-id.conf in /etc/openvswitch.
   (#1132707)
