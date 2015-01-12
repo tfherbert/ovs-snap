@@ -1,5 +1,8 @@
 %global _hardened_build 1
 
+%bcond_without dpdk
+%define dpdk_ver 1.7.1
+
 # Uncomment these for snapshot releases:
 # snapshot is the date YYYYMMDD of the snapshot
 # snap_git is the 8 git sha digits of the last commit
@@ -12,16 +15,16 @@
 # 3. Run: ./boot.sh
 # 4. Run: ./configure.sh
 # 5. Run: make dist
-%define snapshot .git20141107
-%define snap_gitsha -git39ebb203
+%define snapshot .git20150112
+%define snap_gitsha -git0f3358ea
 
 # If wants to run tests while building, specify the '--with check'
 # option. For example:
 # rpmbuild -bb --with check openvswitch.spec
 
 Name: openvswitch
-Version: 2.3.0
-Release: 3%{?snapshot}%{?dist}
+Version: 2.3.90
+Release: 1%{?snapshot}%{?dist}
 Summary: Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -32,6 +35,8 @@ License: ASL 2.0 and LGPLv2+ and SISSL
 URL: http://openvswitch.org
 Source0: http://openvswitch.org/releases/%{name}-%{version}%{?snap_gitsha}.tar.gz
 
+Patch0: openvswitch-2.3.90-foolibs.patch
+
 ExcludeArch: ppc
 
 BuildRequires: autoconf
@@ -39,6 +44,10 @@ BuildRequires: systemd-units openssl openssl-devel
 BuildRequires: python python-twisted-core python-zope-interface PyQt4
 BuildRequires: desktop-file-utils
 BuildRequires: groff graphviz
+
+%if %{with dpdk}
+BuildRequires: dpdk >= %{dpdk_ver}
+%endif
 
 Requires: openssl iproute module-init-tools
 #Upstream kernel commit 4f647e0a3c37b8d5086214128614a136064110c3
@@ -89,8 +98,16 @@ files needed to build an external application.
 %prep
 %setup -q -n %{name}-%{version}%{?snap_gitsha}
 
+#%patch0 -p1 -b .foolibs
+
 %build
-%configure --enable-ssl --with-pkidir=%{_sharedstatedir}/openvswitch/pki
+autoreconf
+%configure \
+	--enable-ssl \
+%if %{with dpdk}
+	--with-dpdk=/usr/lib/dpdk-%{dpdk_ver}-sdk \
+%endif
+	--with-pkidir=%{_sharedstatedir}/openvswitch/pki
 make %{?_smp_mflags}
 
 %install
@@ -224,6 +241,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/*.la
 %{_includedir}/openvswitch/*
 %{_includedir}/openflow/*
+%{_libdir}/pkgconfig/*.pc
 
 %files
 %defattr(-,root,root)
@@ -246,14 +264,14 @@ rm -rf $RPM_BUILD_ROOT
 %config %{_datadir}/openvswitch/vswitch.ovsschema
 %config %{_datadir}/openvswitch/vtep.ovsschema
 %{_bindir}/ovs-appctl
-#%{_bindir}/ovs-docker
+%{_bindir}/ovs-docker
 %{_bindir}/ovs-dpctl
 %{_bindir}/ovs-dpctl-top
 %{_bindir}/ovs-ofctl
 %{_bindir}/ovs-vsctl
 %{_bindir}/ovsdb-client
 %{_bindir}/ovsdb-tool
-#%{_bindir}/ovs-testcontroller
+%{_bindir}/ovs-testcontroller
 %{_bindir}/ovs-pki
 %{_bindir}/vtep-ctl
 %{_sbindir}/ovs-bugtool
@@ -278,9 +296,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man8/ovs-vsctl.8*
 %{_mandir}/man8/ovs-vswitchd.8*
 %{_mandir}/man8/ovs-parse-backtrace.8*
-#%{_mandir}/man8/ovs-testcontroller.8*
-%doc COPYING DESIGN INSTALL.SSL NOTICE README WHY-OVS
-%doc FAQ NEWS INSTALL.DPDK rhel/README.RHEL
+%{_mandir}/man8/ovs-testcontroller.8*
+%doc COPYING DESIGN.md INSTALL.SSL.md NOTICE README.md WHY-OVS.md
+%doc FAQ.md NEWS INSTALL.DPDK.md rhel/README.RHEL
 /var/lib/openvswitch
 /var/log/openvswitch
 %exclude %{_bindir}/ovs-benchmark
@@ -295,6 +313,14 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Mon Jan 12 2015 Panu Matilainen 2.3.90-0.git20150112.1
+- Update to 2.3.90-git0f3358ea
+- Build with dpdk 1.7.1
+
+* Fri Dec 19 2014 Panu Matilainen 2.3.90-0.git20141219.1
+- Update to 2.3.90-git5af43325
+- Build with DPDK
+
 * Fri Nov 07 2014 Flavio Leitner - 2.3.0-3.git20141107
 - updated to 2.3.0-git39ebb203
 
