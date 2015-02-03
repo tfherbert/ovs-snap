@@ -1,7 +1,8 @@
 %global _hardened_build 1
 
+# option to build without dpdk
 %bcond_without dpdk
-%define dpdk_ver 1.7.1
+%define dpdk_ver 1.8.0
 
 # Uncomment these for snapshot releases:
 # snapshot is the date YYYYMMDD of the snapshot
@@ -15,8 +16,8 @@
 # 3. Run: ./boot.sh
 # 4. Run: ./configure.sh
 # 5. Run: make dist
-%define snapshot .git20150112
-%define snap_gitsha -git0f3358ea
+%define snapshot .git20150202
+%define snap_gitsha -gitc1419aa1
 
 # If wants to run tests while building, specify the '--with check'
 # option. For example:
@@ -24,7 +25,7 @@
 
 Name: openvswitch
 Version: 2.3.90
-Release: 1%{?snapshot}%{?dist}
+Release: 1%{?snapshot}%{?dist}.lorg
 Summary: Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -35,7 +36,10 @@ License: ASL 2.0 and LGPLv2+ and SISSL
 URL: http://openvswitch.org
 Source0: http://openvswitch.org/releases/%{name}-%{version}%{?snap_gitsha}.tar.gz
 
-Patch0: openvswitch-2.3.90-foolibs.patch
+#Patch0: openvswitch-2.3.90-dpdk-libs-0.patch
+# work-in-progress dpdk-integration
+#Patch1: openvswitch-2.3.90-dpdk-1.patch
+Patch1: openvswitch-dpdk-1.8-0.patch
 
 ExcludeArch: ppc
 
@@ -98,14 +102,17 @@ files needed to build an external application.
 %prep
 %setup -q -n %{name}-%{version}%{?snap_gitsha}
 
-#%patch0 -p1 -b .foolibs
+%patch1 -p1 -b .dpdk-1.8
 
 %build
-autoreconf
+%if %{with dpdk}
+unset RTE_SDK
+. /etc/profile.d/dpdk-sdk-%{_arch}.sh
+%endif
 %configure \
 	--enable-ssl \
 %if %{with dpdk}
-	--with-dpdk=/usr/lib/dpdk-%{dpdk_ver}-sdk \
+	--with-dpdk=${RTE_SDK}/${RTE_TARGET} \
 %endif
 	--with-pkidir=%{_sharedstatedir}/openvswitch/pki
 make %{?_smp_mflags}
@@ -313,6 +320,10 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Tue Feb 3 2015 Panu Matilainen 2.3.90-0.git20150202.1
+- OVS snapshot of the day
+- Add patch to make it build with DPDK 1.8
+
 * Mon Jan 12 2015 Panu Matilainen 2.3.90-0.git20150112.1
 - Update to 2.3.90-git0f3358ea
 - Build with dpdk 1.7.1
