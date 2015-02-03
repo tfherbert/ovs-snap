@@ -25,7 +25,7 @@
 
 Name: openvswitch
 Version: 2.3.90
-Release: 1%{?snapshot}%{?dist}.lorg
+Release: 2%{?snapshot}%{?dist}.lorg
 Summary: Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -36,9 +36,6 @@ License: ASL 2.0 and LGPLv2+ and SISSL
 URL: http://openvswitch.org
 Source0: http://openvswitch.org/releases/%{name}-%{version}%{?snap_gitsha}.tar.gz
 
-#Patch0: openvswitch-2.3.90-dpdk-libs-0.patch
-# work-in-progress dpdk-integration
-#Patch1: openvswitch-2.3.90-dpdk-1.patch
 Patch1: openvswitch-dpdk-1.8-0.patch
 
 ExcludeArch: ppc
@@ -50,7 +47,7 @@ BuildRequires: desktop-file-utils
 BuildRequires: groff graphviz
 
 %if %{with dpdk}
-BuildRequires: dpdk >= %{dpdk_ver}
+BuildRequires: dpdk-devel >= %{dpdk_ver}
 %endif
 
 Requires: openssl iproute module-init-tools
@@ -320,6 +317,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Tue Feb 3 2015 Panu Matilainen 2.3.90-0.git20150202.2
+- Rebuild with library versioned dpdk 
+
 * Tue Feb 3 2015 Panu Matilainen 2.3.90-0.git20150202.1
 - OVS snapshot of the day
 - Add patch to make it build with DPDK 1.8
