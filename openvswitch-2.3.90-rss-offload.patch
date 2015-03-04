@@ -1,0 +1,13 @@
+diff -up openvswitch-2.3.90-gitca8127fd/lib/netdev-dpdk.c.rss-offload openvswitch-2.3.90-gitca8127fd/lib/netdev-dpdk.c
+--- openvswitch-2.3.90-gitca8127fd/lib/netdev-dpdk.c.rss-offload	2015-03-04 10:19:27.351047977 +0200
++++ openvswitch-2.3.90-gitca8127fd/lib/netdev-dpdk.c	2015-03-04 10:21:19.734841512 +0200
+@@ -106,8 +106,7 @@ static const struct rte_eth_conf port_co
+     .rx_adv_conf = {
+         .rss_conf = {
+             .rss_key = NULL,
+-            .rss_hf = ETH_RSS_IPV4_TCP | ETH_RSS_IPV4 | ETH_RSS_IPV6
+-                    | ETH_RSS_IPV4_UDP | ETH_RSS_IPV6_TCP | ETH_RSS_IPV6_UDP,
++            .rss_hf = ETH_RSS_IP | ETH_RSS_UDP | ETH_RSS_TCP,
+         },
+     },
+     .txmode = {

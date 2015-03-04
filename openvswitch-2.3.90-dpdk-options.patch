@@ -1,0 +1,18 @@
+diff --git a/utilities/ovs-ctl.in b/utilities/ovs-ctl.in
+index 6d2e938..7db1500 100755
+--- a/utilities/ovs-ctl.in
++++ b/utilities/ovs-ctl.in
+@@ -240,8 +240,11 @@ start_forwarding () {
+         fi
+ 
+ 	    # Start ovs-vswitchd.
+-	    set ovs-vswitchd unix:"$DB_SOCK"
+-	    set "$@" -vconsole:emer -vsyslog:err -vfile:info
++	    set ovs-vswitchd
++	    if test X"$DPDK_OPTIONS" != X; then
++	        set "$@" --dpdk $DPDK_OPTIONS --
++	    fi
++	    set "$@" unix:"$DB_SOCK" -vconsole:emer -vsyslog:err -vfile:info
+ 	    if test X"$MLOCKALL" != Xno; then
+ 	        set "$@" --mlockall
+ 	    fi

@@ -16,8 +16,8 @@
 # 3. Run: ./boot.sh
 # 4. Run: ./configure.sh
 # 5. Run: make dist
-%define snapshot .git20150202
-%define snap_gitsha -gitc1419aa1
+%define snapshot .git20150218
+%define snap_gitsha -gitca8127fd
 
 # If wants to run tests while building, specify the '--with check'
 # option. For example:
@@ -25,7 +25,7 @@
 
 Name: openvswitch
 Version: 2.3.90
-Release: 2%{?snapshot}%{?dist}.lorg
+Release: 9%{?snapshot}%{?dist}
 Summary: Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -36,7 +36,14 @@ License: ASL 2.0 and LGPLv2+ and SISSL
 URL: http://openvswitch.org
 Source0: http://openvswitch.org/releases/%{name}-%{version}%{?snap_gitsha}.tar.gz
 
-Patch1: openvswitch-dpdk-1.8-0.patch
+# http://openvswitch.org/pipermail/dev/2015-February/051306.html
+Patch1: openvswitch-2.3.90-dpdk-1.8.0-v3.patch
+# http://openvswitch.org/pipermail/dev/2015-January/050279.html
+Patch2: openvswitch-2.3.90-vhost-cuse-1.patch
+# Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
+Patch3: openvswitch-2.3.90-dpdk-options.patch
+# DPDK commit b12964f621dcb9bc0f71975c9ab2b5c9b58eed39 changed TCP_RSS defs
+Patch4: openvswitch-2.3.90-rss-offload.patch
 
 ExcludeArch: ppc
 
@@ -48,6 +55,8 @@ BuildRequires: groff graphviz
 
 %if %{with dpdk}
 BuildRequires: dpdk-devel >= %{dpdk_ver}
+BuildRequires: autoconf automake fuse-devel
+Provides: %{name}-dpdk = %{version}-%{release}
 %endif
 
 Requires: openssl iproute module-init-tools
@@ -100,11 +109,15 @@ files needed to build an external application.
 %setup -q -n %{name}-%{version}%{?snap_gitsha}
 
 %patch1 -p1 -b .dpdk-1.8
+%patch2 -p1 -b .vhost-cuse
+%patch3 -p1 -b .dpdk-options
+%patch4 -p1 -b .rss-offload
 
 %build
 %if %{with dpdk}
 unset RTE_SDK
 . /etc/profile.d/dpdk-sdk-%{_arch}.sh
+autoreconf
 %endif
 %configure \
 	--enable-ssl \
@@ -317,14 +330,36 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
-* Tue Feb 3 2015 Panu Matilainen 2.3.90-0.git20150202.2
+* Wed Mar 04 2015 Panu Matilainen 2.3.90-9.git20150218
+- Fix build with recent DPDK snapshots
+
+* Fri Feb 20 2015 Panu Matilainen 2.3.90-8.git20150218
+- Support passing arbitrary DPDK options via /etc/sysconfig/openvswitch
+
+* Thu Feb 19 2015 Panu Matilainen 2.3.90-7.git20150218
+- Build-require automake + autoconf due to vhost-cuse touching makefiles
+
+* Thu Feb 19 2015 Panu Matilainen 2.3.90-6.git20150218
+- Add vhost-cuse patch 
+- Comment patch origins
+
+* Wed Feb 18 2015 Panu Matilainen 2.3.90-5.git20150218
+- OVS snapshot of the day
+
+* Wed Feb 18 2015 2015 Panu Matilainen 2.3.90-4.git20150202
+- Update to latest (hopefully final) dpdk-support patch fron Intel
+
+* Thu Feb 5 2015 Panu Matilainen 2.3.90-3.git20150202
+- Another rebuild for versioning change
+
+* Tue Feb 3 2015 Panu Matilainen 2.3.90-2.git20150202
 - Rebuild with library versioned dpdk 
 
-* Tue Feb 3 2015 Panu Matilainen 2.3.90-0.git20150202.1
+* Tue Feb 3 2015 Panu Matilainen 2.3.90-1.git20150202
 - OVS snapshot of the day
 - Add patch to make it build with DPDK 1.8
 
-* Mon Jan 12 2015 Panu Matilainen 2.3.90-0.git20150112.1
+* Mon Jan 12 2015 Panu Matilainen 2.3.90-1.git20150112
 - Update to 2.3.90-git0f3358ea
 - Build with dpdk 1.7.1
 
