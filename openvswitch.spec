@@ -4,28 +4,19 @@
 %bcond_without dpdk
 %define dpdk_ver 1.8.0
 
-# Uncomment these for snapshot releases:
-# snapshot is the date YYYYMMDD of the snapshot
-# snap_git is the 8 git sha digits of the last commit
-# You must edit configure.ac and downgrade the version from
-# the development one to the stable one to not confuse RPM
-# during future upgrades.
-# Steps:
-# 1. Checkout the git branch
-# 2. Change version in configure.ac to be <stable version>-git<8sha>
-# 3. Run: ./boot.sh
-# 4. Run: ./configure.sh
-# 5. Run: make dist
-%define snapshot .git20150218
-%define snap_gitsha -gitca8127fd
+%define ver 2.3.90
+%define rel 1
+%define snapver 9868.git973edd6e
+
+%define srcver %{ver}%{?snapver:-%{snapver}}
 
 # If wants to run tests while building, specify the '--with check'
 # option. For example:
 # rpmbuild -bb --with check openvswitch.spec
 
 Name: openvswitch
-Version: 2.3.90
-Release: 9%{?snapshot}%{?dist}
+Version: %{ver}
+Release: %{snapver}.%{rel}%{?dist}
 Summary: Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -34,12 +25,14 @@ Summary: Open vSwitch daemon/database/utilities
 # python/compat is Python (although not built into any of the binary packages)
 License: ASL 2.0 and LGPLv2+ and SISSL
 URL: http://openvswitch.org
-Source0: http://openvswitch.org/releases/%{name}-%{version}%{?snap_gitsha}.tar.gz
+#Source0: http://openvswitch.org/releases/%{name}-%{version}%{?snap_gitsha}.tar.gz
+Source0: %{name}-%{srcver}.tar.gz
 
-# http://openvswitch.org/pipermail/dev/2015-February/051306.html
-Patch1: openvswitch-2.3.90-dpdk-1.8.0-v3.patch
+# snapshot creation script, not used for build itself
+Source100: ovs-snapshot.sh
+
 # http://openvswitch.org/pipermail/dev/2015-January/050279.html
-Patch2: openvswitch-2.3.90-vhost-cuse-1.patch
+Patch2: openvswitch-2.3.90-vhost-cuse-2.patch
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 # DPDK commit b12964f621dcb9bc0f71975c9ab2b5c9b58eed39 changed TCP_RSS defs
@@ -47,7 +40,7 @@ Patch4: openvswitch-2.3.90-rss-offload.patch
 
 ExcludeArch: ppc
 
-BuildRequires: autoconf
+BuildRequires: autoconf automake libtool
 BuildRequires: systemd-units openssl openssl-devel
 BuildRequires: python python-twisted-core python-zope-interface PyQt4
 BuildRequires: desktop-file-utils
@@ -106,9 +99,8 @@ files needed to build an external application.
 
 
 %prep
-%setup -q -n %{name}-%{version}%{?snap_gitsha}
+%setup -q -n %{name}-%{srcver}
 
-%patch1 -p1 -b .dpdk-1.8
 %patch2 -p1 -b .vhost-cuse
 %patch3 -p1 -b .dpdk-options
 %patch4 -p1 -b .rss-offload
@@ -117,14 +109,18 @@ files needed to build an external application.
 %if %{with dpdk}
 unset RTE_SDK
 . /etc/profile.d/dpdk-sdk-%{_arch}.sh
-autoreconf
+# Dunno, this is needed for rhel-7 builds, gcc version difference perhaps?
+export CFLAGS="%{optflags} -msse4.1"
 %endif
+
+autoreconf -i
 %configure \
 	--enable-ssl \
 %if %{with dpdk}
 	--with-dpdk=${RTE_SDK}/${RTE_TARGET} \
 %endif
-	--with-pkidir=%{_sharedstatedir}/openvswitch/pki
+	--with-pkidir=%{_sharedstatedir}/openvswitch/pki \
+
 make %{?_smp_mflags}
 
 %install
@@ -330,6 +326,19 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Tue Mar 10 2015 Panu Matilainen 2.3.90-9868.git973edd6e.1
+- New snapshot
+- Include snapshot script in src.rpm
+
+* Thu Mar 05 2015 Panu Matilainen 2.3.90-9862.git7cc398cb.2
+- New snapshot style requires automake and libtool on build
+- Add explicit -msse4.1 to get it to build on rhel-7
+
+* Thu Mar 05 2015 Panu Matilainen 2.3.90-9862.git7cc398cb.1
+- Change snapshot style for easier automation
+- New snapshot with DPDK >= 1.8 support upstream
+- New version of vhost-cuse patch, rebase to match current upstream
+
 * Wed Mar 04 2015 Panu Matilainen 2.3.90-9.git20150218
 - Fix build with recent DPDK snapshots
 
