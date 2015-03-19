@@ -6,7 +6,7 @@
 
 %define ver 2.3.90
 %define rel 1
-%define snapver 9868.git973edd6e
+%define snapver 9900.gitb6b0e049
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -53,8 +53,13 @@ Provides: %{name}-dpdk = %{version}-%{release}
 %endif
 
 Requires: openssl iproute module-init-tools
+# RHEL-7.1 kernel is at circa 3.18 wrt OVS
+%if 0%{?rhel} >= 7
+Requires: kernel >= 3.10.0-229.el7
+%else
 #Upstream kernel commit 4f647e0a3c37b8d5086214128614a136064110c3
 Requires: kernel >= 3.15.0-0
+%endif
 
 Requires(post): systemd-units
 Requires(preun): systemd-units
@@ -326,6 +331,10 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Thu Mar 19 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9900.gitb6b0e049
+- New snapshot
+- Fixup kernel dependency version on EL7
+
 * Tue Mar 10 2015 Panu Matilainen 2.3.90-9868.git973edd6e.1
 - New snapshot
 - Include snapshot script in src.rpm
