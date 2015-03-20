@@ -6,7 +6,7 @@
 
 %define ver 2.3.90
 %define rel 1
-%define snapver 9900.gitb6b0e049
+%define snapver 9902.git58397e6c
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -31,8 +31,6 @@ Source0: %{name}-%{srcver}.tar.gz
 # snapshot creation script, not used for build itself
 Source100: ovs-snapshot.sh
 
-# http://openvswitch.org/pipermail/dev/2015-January/050279.html
-Patch2: openvswitch-2.3.90-vhost-cuse-2.patch
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 # DPDK commit b12964f621dcb9bc0f71975c9ab2b5c9b58eed39 changed TCP_RSS defs
@@ -53,13 +51,6 @@ Provides: %{name}-dpdk = %{version}-%{release}
 %endif
 
 Requires: openssl iproute module-init-tools
-# RHEL-7.1 kernel is at circa 3.18 wrt OVS
-%if 0%{?rhel} >= 7
-Requires: kernel >= 3.10.0-229.el7
-%else
-#Upstream kernel commit 4f647e0a3c37b8d5086214128614a136064110c3
-Requires: kernel >= 3.15.0-0
-%endif
 
 Requires(post): systemd-units
 Requires(preun): systemd-units
@@ -106,7 +97,6 @@ files needed to build an external application.
 %prep
 %setup -q -n %{name}-%{srcver}
 
-%patch2 -p1 -b .vhost-cuse
 %patch3 -p1 -b .dpdk-options
 %patch4 -p1 -b .rss-offload
 
@@ -331,6 +321,11 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Fri Mar 20 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9902.git58397e6c
+- New snapshot
+- Vhost-cuse upstreamed, drop patch
+- Drop problematic kernel require entirely
+
 * Thu Mar 19 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9900.gitb6b0e049
 - New snapshot
 - Fixup kernel dependency version on EL7
