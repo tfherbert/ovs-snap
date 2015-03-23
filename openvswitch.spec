@@ -6,7 +6,7 @@
 
 %define ver 2.3.90
 %define rel 1
-%define snapver 9902.git58397e6c
+%define snapver 9908.git2c9907cd
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -321,6 +321,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Mon Mar 23 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9908.git2c9907cd
+- New snapshot
+
 * Fri Mar 20 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9902.git58397e6c
 - New snapshot
 - Vhost-cuse upstreamed, drop patch
