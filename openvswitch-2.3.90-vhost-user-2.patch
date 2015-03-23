@@ -1,0 +1,400 @@
+commit 6d626619a0d3d71c12608529e493712c78085066
+Author: Panu Matilainen <pmatilai@redhat.com>
+Date:   Mon Mar 23 14:48:01 2015 +0200
+
+    Vhost-user support
+
+diff --git a/INSTALL.DPDK.md b/INSTALL.DPDK.md
+index 5b61272..4d64078 100644
+--- a/INSTALL.DPDK.md
++++ b/INSTALL.DPDK.md
+@@ -298,40 +298,104 @@ the vswitchd.
+ DPDK vhost:
+ -----------
+ 
+-vhost-cuse is only supported at present i.e. not using the standard QEMU
+-vhost-user interface. It is intended that vhost-user support will be added
+-in future releases when supported in DPDK and that vhost-cuse will eventually
+-be deprecated. See [DPDK Docs] for more info on vhost.
++DPDK 2.0 supports two types of vhost:
++1.  vhost-user
++2.  vhost-cuse
++
++By default, vhost-user is enabled in DPDK and following this, the same
++applies for OVS.
++
++Should you wish to use vhost-cuse instead of vhost-user, you must do the
++following:
++1.  Enable vhost-cuse in DPDK and re-build. At the moment this can be
++    achieved by modifying the `$RTE_SDK/lib/librte_vhost/Makefile` file
++    and commenting out vhost-user SRCS and uncommenting vhost-cuse SRCS:
++
++      `SRCS-$(CONFIG_RTE_LIBRTE_VHOST) += vhost_cuse/vhost-net-cdev.c vhost_cuse/virtio-net-cdev.c vhost_cuse/eventfd_copy.c
++       # SRCS-$(CONFIG_RTE_LIBRTE_VHOST) += vhost_user/vhost-net-user.c vhost_user/virtio-net-user.c vhost_user/fd_man.c`
++
++2.  Enable vhost-cuse in OVS and re-build. This can be achieved by using
++    the `--with-vhostcuse` flag in the `./configure` step like so:
++
++      `./configure --with-dpdk=$DPDK_BUILD --with-vhostcuse`
+ 
+ Prerequisites:
+-1.  Insert the Cuse module:
++1.  DPDK 2.0 with vhost support enabled and recompile OVS as above.
+ 
+-      `modprobe cuse`
++     Update `config/common_linuxapp` so that DPDK is built with vhost
++     libraries:
+ 
+-2.  Build and insert the `eventfd_link` module:
++     `CONFIG_RTE_LIBRTE_VHOST=y`
+ 
+-     `cd $DPDK_DIR/lib/librte_vhost/eventfd_link/`
+-     `make`
+-     `insmod $DPDK_DIR/lib/librte_vhost/eventfd_link.ko`
++2. (Optional)If using vhost-cuse:
++
++    2.1  Insert the Cuse module:
++          `modprobe cuse`
++
++    2.2  Build and insert the `eventfd_link` module:
++          `cd $DPDK_DIR/lib/librte_vhost/eventfd_link/`
++          `make`
++          `insmod $DPDK_DIR/lib/librte_vhost/eventfd_link.ko`
+ 
+ Following the steps above to create a bridge, you can now add DPDK vhost
+-as a port to the vswitch.
++as a port to the vswitch. Unlike DPDK ring ports, DPDK vhost ports can have
++arbitrary names.
+ 
+-`ovs-vsctl add-port br0 dpdkvhost0 -- set Interface dpdkvhost0 type=dpdkvhost`
++When adding vhost ports to the switch, take care depending on which
++type of vhost you are using.
+ 
+-Unlike DPDK ring ports, DPDK vhost ports can have arbitrary names:
++  -  For vhost-user (default), the name of the port type is `dpdkvhostuser`
+ 
+-`ovs-vsctl add-port br0 port123ABC -- set Interface port123ABC type=dpdkvhost`
++      `ovs-ofctl add-port br0 vhost-user1 -- set Interface vhost-user1 type=dpdkvhostuser`
+ 
+-However, please note that when attaching userspace devices to QEMU, the
+-name provided during the add-port operation must match the ifname parameter
+-on the QEMU command line.
++     This action creates a socket located at `/tmp/vhost-user1`, which you
++     must provide to your VM on the QEMU command line. More instructions
++     on this can be found in the next section "DPDK vhost-user VM
++     configuration"
+ 
++  -  For vhost-cuse, the name of the port type is `dpdkvhost`
+ 
+-DPDK vhost VM configuration:
+-----------------------------
++      `ovs-ofctl add-port br0 vhost-cuse1 -- set Interface vhost-cuse1 type=dpdkvhost`
+ 
+-   vhost ports use a Linux* character device to communicate with QEMU.
++     When attaching vhost-cuse ports to QEMU, the name provided during the
++     add-port operation must match the ifname parameter on the QEMU command
++     line. More instructions on this can be found in the section "DPDK
++     vhost-cuse VM configuration"
++
++DPDK vhost-user VM configuration:
++---------------------------------
++DPDK vhost-user works with QEMU v2.2.0. Follow the steps below to attach
++vhost-user port(s) to a VM.
++
++1. Configure sockets.
++   Pass the following parameters to QEMU to attach a vhost-user device.
++
++     ```
++     -chardev socket,id=char0,path=/tmp/vhost-user-1
++     -netdev type=vhost-user,id=mynet1,chardev=char0,vhostforce
++     -device virtio-net-pci,mac=00:00:00:00:00:01,netdev=mynet1
++     ```
++
++     ...where vhost-user-1 is the name of the vhost-user port added
++     to the switch.
++     Repeat the above parameters for multiple devices, changing the
++     chardev path and id as necessary.
++
++2. Configure huge pages:
++   QEMU must allocate the VM's memory on hugetlbfs. Vhost ports access a
++   virtio-net device's virtual rings and packet buffers mapping the VM's
++   physical memory on hugetlbfs. To enable vhost-ports to map the VM's
++   memory into their process address space, pass the following parameters
++   to QEMU:
++
++     `-object memory-backend-file,id=mem,size=4096M,mem-path=/dev/hugepages,share=on
++     -numa node,memdev=mem -mem-prealloc`
++
++
++DPDK vhost-cuse VM configuration:
++---------------------------------
++
++   vhost-cuse ports use a Linux* character device to communicate with QEMU.
+    By default it is set to `/dev/vhost-net`. It is possible to reuse this
+    standard device for DPDK vhost, which makes setup a little simpler but it
+    is better practice to specify an alternative character device in order to
+@@ -397,15 +461,15 @@ DPDK vhost VM configuration:
+    QEMU must allocate the VM's memory on hugetlbfs. Vhost ports access a
+    virtio-net device's virtual rings and packet buffers mapping the VM's
+    physical memory on hugetlbfs. To enable vhost-ports to map the VM's
+-   memory into their process address space, pass the following paramters
++   memory into their process address space, pass the following parameters
+    to QEMU:
+ 
+      `-object memory-backend-file,id=mem,size=4096M,mem-path=/dev/hugepages,
+       share=on -numa node,memdev=mem -mem-prealloc`
+ 
+ 
+-DPDK vhost VM configuration with QEMU wrapper:
+-----------------------------------------------
++DPDK vhost-cuse VM configuration with QEMU wrapper:
++---------------------------------------------------
+ 
+ The QEMU wrapper script automatically detects and calls QEMU with the
+ necessary parameters. It performs the following actions:
+@@ -431,8 +495,8 @@ qemu-wrap.py -cpu host -boot c -hda <disk image> -m 4096 -smp 4
+   script=no,downscript=no,ifname=if1,vhost=on -device virtio-net-pci,
+   netdev=net1,mac=00:00:00:00:00:01
+ 
+-DPDK vhost VM configuration with libvirt:
+------------------------------------------
++DPDK vhost-cuse VM configuration with libvirt:
++----------------------------------------------
+ 
+ If you are using libvirt, you must enable libvirt to access the character
+ device by adding it to controllers cgroup for libvirtd using the following
+@@ -506,7 +570,7 @@ Now you may launch your VM using virt-manager, or like so:
+ 
+     `virsh create my_vhost_vm.xml`
+ 
+-DPDK vhost VM configuration with libvirt and QEMU wrapper:
++DPDK vhost-cuse VM configuration with libvirt and QEMU wrapper:
+ ----------------------------------------------------------
+ 
+ To use the qemu-wrapper script in conjuntion with libvirt, follow the
+@@ -534,7 +598,7 @@ steps in the previous section before proceeding with the following steps:
+   the correct emulator location and set any additional options. If you are
+   using a alternative character device name, please set "us_vhost_path" to the
+   location of that device. The script will automatically detect and insert
+-  the correct "vhostfd" value in the QEMU command line arguements.
++  the correct "vhostfd" value in the QEMU command line arguments.
+ 
+   5. Use virt-manager to launch the VM
+ 
+diff --git a/acinclude.m4 b/acinclude.m4
+index 5ed70c1..85045be 100644
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -225,6 +225,19 @@ AC_DEFUN([OVS_CHECK_DPDK], [
+   AM_CONDITIONAL([DPDK_NETDEV], test -n "$RTE_SDK")
+ ])
+ 
++dnl OVS_CHECK_VHOST_CUSE
++dnl
++dnl Enable DPDK vhost-cuse support in favour of vhost-user
++AC_DEFUN([OVS_CHECK_VHOST_CUSE], [
++  AC_ARG_WITH(vhostcuse,
++              [AC_HELP_STRING([--with-vhostcuse],
++                              [Enable DPDK vhost-cuse])])
++
++  if test X"$with_vhostcuse" != X; then
++    AC_DEFINE([VHOST_CUSE], [1], [DPDK vhost-cuse support enabled, vhost-user disabled.])
++  fi
++])
++
+ dnl OVS_GREP_IFELSE(FILE, REGEX, [IF-MATCH], [IF-NO-MATCH])
+ dnl
+ dnl Greps FILE for REGEX.  If it matches, runs IF-MATCH, otherwise IF-NO-MATCH.
+diff --git a/configure.ac b/configure.ac
+index 8d47eb9..14c4b35 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -163,6 +163,7 @@ AC_ARG_VAR(KARCH, [Kernel Architecture String])
+ AC_SUBST(KARCH)
+ OVS_CHECK_LINUX
+ OVS_CHECK_DPDK
++OVS_CHECK_VHOST_CUSE
+ OVS_CHECK_PRAGMA_MESSAGE
+ AC_SUBST([OVS_CFLAGS])
+ AC_SUBST([OVS_LDFLAGS])
+diff --git a/lib/netdev-dpdk.c b/lib/netdev-dpdk.c
+index bf69b10..de52c48 100644
+--- a/lib/netdev-dpdk.c
++++ b/lib/netdev-dpdk.c
+@@ -87,8 +87,12 @@ static struct vlog_rate_limit rl = VLOG_RATE_LIMIT_INIT(5, 20);
+ 
+ #define MAX_PKT_BURST 32           /* Max burst size for RX/TX */
+ 
++#ifdef VHOST_CUSE
+ /* Character device cuse_dev_name. */
+ char *cuse_dev_name = NULL;
++#else
++#define VHOST_USER_PORT_SOCK_PATH "/tmp/%s" /* Socket Location Template */
++#endif
+ 
+ static const struct rte_eth_conf port_conf = {
+     .rxmode = {
+@@ -221,6 +225,11 @@ struct netdev_dpdk {
+     /* virtio-net structure for vhost device */
+     OVSRCU_TYPE(struct virtio_net *) virtio_dev;
+ 
++#ifndef VHOST_CUSE
++    /* socket location for vhost-user device */
++    char socket_path[IF_NAME_SZ];
++#endif
++
+     /* In dpdk_list. */
+     struct ovs_list list_node OVS_GUARDED_BY(dpdk_mutex);
+     rte_spinlock_t txq_lock;
+@@ -541,6 +550,20 @@ netdev_dpdk_init(struct netdev *netdev_, unsigned int port_no,
+     netdev_->n_txq = NR_QUEUE;
+     netdev_->n_rxq = NR_QUEUE;
+ 
++#ifndef VHOST_CUSE
++    snprintf(netdev->socket_path, sizeof(netdev->socket_path),
++	     VHOST_USER_PORT_SOCK_PATH, netdev_->name);
++    err = rte_vhost_driver_register(netdev->socket_path);
++    if (err != 0) {
++	VLOG_ERR("vhost-user socket device setup failure for socket %s\n",
++		 netdev->socket_path);
++	goto unlock;
++    }
++    VLOG_INFO("Socket %s created for vhost-user port %s\n",
++	      netdev->socket_path, netdev_->name);
++#endif
++    
++
+     if (type == DPDK_DEV_ETH) {
+ 	    netdev_dpdk_alloc_txq(netdev, NR_QUEUE);
+ 	    err = dpdk_eth_dev_init(netdev);
+@@ -1520,7 +1543,11 @@ new_device(struct virtio_net *dev)
+     ovs_mutex_lock(&dpdk_mutex);
+     /* Add device to the vhost port with the same name as that passed down. */
+     LIST_FOR_EACH(netdev, list_node, &dpdk_list) {
++#ifdef VHOST_CUSE
+         if (strncmp(dev->ifname, netdev->up.name, IFNAMSIZ) == 0) {
++#else
++	if (strncmp(dev->ifname, netdev->socket_path, IF_NAME_SZ) == 0) {
++#endif
+             ovs_mutex_lock(&netdev->mutex);
+             ovsrcu_set(&netdev->virtio_dev, dev);
+             ovs_mutex_unlock(&netdev->mutex);
+@@ -1595,7 +1622,7 @@ const struct virtio_net_device_ops virtio_net_device_ops =
+ };
+ 
+ static void *
+-start_cuse_session_loop(void *dummy OVS_UNUSED)
++start_vhost_loop(void *dummy OVS_UNUSED)
+ {
+      pthread_detach(pthread_self());
+      rte_vhost_driver_session_start();
+@@ -1606,24 +1633,25 @@ static int
+ dpdk_vhost_class_init(void)
+ {
+     pthread_t thread;
+-    int err = -1;
+ 
+     rte_vhost_driver_callback_register(&virtio_net_device_ops);
+ 
++#ifdef VHOST_CUSE
+     /* Register CUSE device to handle IOCTLs.
+      * Unless otherwise specified on the vswitchd command line, cuse_dev_name
+      * is set to vhost-net.
+      */
+-    err = rte_vhost_driver_register(cuse_dev_name);
++    int err = rte_vhost_driver_register(cuse_dev_name);
+ 
+     if (err != 0) {
+         VLOG_ERR("CUSE device setup failure.");
+         return -1;
+     }
++#endif
+ 
+     /* start_cuse_session_loop blocks OVS RCU quiescent state, so directly use
+      * pthread API. */
+-    return pthread_create(&thread, NULL, start_cuse_session_loop, NULL);
++    return pthread_create(&thread, NULL, start_vhost_loop, NULL);
+ }
+ 
+ static void
+@@ -1829,8 +1857,10 @@ int
+ dpdk_init(int argc, char **argv)
+ {
+     int result;
++#ifdef VHOST_CUSE
+     int base = 0;
+     char *pragram_name = argv[0];
++#endif
+ 
+     if (argc < 2 || strcmp(argv[1], "--dpdk"))
+         return 0;
+@@ -1839,6 +1869,7 @@ dpdk_init(int argc, char **argv)
+     argc--;
+     argv++;
+ 
++#ifdef VHOST_CUSE
+     /* If the cuse_dev_name parameter has been provided, set 'cuse_dev_name' to
+      * this string if it meets the correct criteria. Otherwise, set it to the
+      * default (vhost-net).
+@@ -1879,11 +1910,15 @@ dpdk_init(int argc, char **argv)
+     if (argc > result) {
+         argv[result] = argv[0];
+     }
++#endif
+ 
+     /* We are called from the main thread here */
+     thread_set_nonpmd();
+-
++#ifdef VHOST_CUSE
+     return result + 1 + base;
++#else
++    return result + 1;
++#endif
+ }
+ 
+ const struct netdev_class dpdk_class =
+@@ -1916,7 +1951,11 @@ const struct netdev_class dpdk_ring_class =
+ 
+ const struct netdev_class dpdk_vhost_class =
+     NETDEV_DPDK_CLASS(
++#ifdef VHOST_CUSE
+         "dpdkvhost",
++#else
++        "dpdkvhostuser",
++#endif
+         dpdk_vhost_class_init,
+         netdev_dpdk_vhost_construct,
+         netdev_dpdk_vhost_destruct,
+diff --git a/lib/netdev.c b/lib/netdev.c
+index 149b39a..523a011 100644
+--- a/lib/netdev.c
++++ b/lib/netdev.c
+@@ -109,7 +109,11 @@ netdev_is_pmd(const struct netdev *netdev)
+ {
+     return (!strcmp(netdev->netdev_class->type, "dpdk") ||
+             !strcmp(netdev->netdev_class->type, "dpdkr") ||
++#ifdef VHOST_CUSE
+             !strcmp(netdev->netdev_class->type, "dpdkvhost"));
++#else
++            !strcmp(netdev->netdev_class->type, "dpdkvhostuser"));
++#endif
+ }
+ 
+ static void
+diff --git a/vswitchd/ovs-vswitchd.c b/vswitchd/ovs-vswitchd.c
+index 44d44f0..984b649 100644
+--- a/vswitchd/ovs-vswitchd.c
++++ b/vswitchd/ovs-vswitchd.c
+@@ -253,8 +253,11 @@ usage(void)
+     vlog_usage();
+     printf("\nDPDK options:\n"
+            "  --dpdk options            Initialize DPDK datapath.\n"
++#ifdef VHOST_CUSE
+            "  --cuse_dev_name BASENAME  override default character device name\n"
+-           "                            for use with userspace vHost.\n");
++           "                            for use with userspace vHost.\n"
++#endif
++          );
+     printf("\nOther options:\n"
+            "  --unixctl=SOCKET          override default control socket name\n"
+            "  -h, --help                display this help message\n"

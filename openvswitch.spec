@@ -5,7 +5,7 @@
 %define dpdk_ver 1.8.0
 
 %define ver 2.3.90
-%define rel 1
+%define rel 2
 %define snapver 9908.git2c9907cd
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -35,6 +35,8 @@ Source100: ovs-snapshot.sh
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 # DPDK commit b12964f621dcb9bc0f71975c9ab2b5c9b58eed39 changed TCP_RSS defs
 Patch4: openvswitch-2.3.90-rss-offload.patch
+# Rebased from http://openvswitch.org/pipermail/dev/2015-March/052679.html
+Patch5: openvswitch-2.3.90-vhost-user-2.patch
 
 ExcludeArch: ppc
 
@@ -99,6 +101,7 @@ files needed to build an external application.
 
 %patch3 -p1 -b .dpdk-options
 %patch4 -p1 -b .rss-offload
+%patch5 -p1 -b .vhost-user
 
 %build
 %if %{with dpdk}
@@ -271,6 +274,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/openvswitch/scripts/ovs-ctl
 %config %{_datadir}/openvswitch/vswitch.ovsschema
 %config %{_datadir}/openvswitch/vtep.ovsschema
+%{_sysconfdir}/bash_completion.d/*.bash
 %{_bindir}/ovs-appctl
 %{_bindir}/ovs-docker
 %{_bindir}/ovs-dpctl
@@ -321,7 +325,10 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
-* Mon Mar 23 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9908.git2c9907cd
+* Mon Mar 23 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9908.git2c9907cd.2
+- Add vhost-user support (disables vhost-cuse)
+
+* Mon Mar 23 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9908.git2c9907cd.1
 - New snapshot
 
 * Fri Mar 20 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9902.git58397e6c
