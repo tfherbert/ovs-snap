@@ -5,7 +5,7 @@
 %define dpdk_ver 1.8.0
 
 %define ver 2.3.90
-%define rel 2
+%define rel 3
 %define snapver 9908.git2c9907cd
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -36,7 +36,7 @@ Patch3: openvswitch-2.3.90-dpdk-options.patch
 # DPDK commit b12964f621dcb9bc0f71975c9ab2b5c9b58eed39 changed TCP_RSS defs
 Patch4: openvswitch-2.3.90-rss-offload.patch
 # Rebased from http://openvswitch.org/pipermail/dev/2015-March/052679.html
-Patch5: openvswitch-2.3.90-vhost-user-2.patch
+Patch5: openvswitch-2.3.90-vhost-user-3.patch
 
 ExcludeArch: ppc
 
@@ -325,6 +325,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Tue Mar 24 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9908.git2c9907cd.3
+- Yesterdays vhost-user patch was very broken...
+
 * Mon Mar 23 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9908.git2c9907cd.2
 - Add vhost-user support (disables vhost-cuse)
 

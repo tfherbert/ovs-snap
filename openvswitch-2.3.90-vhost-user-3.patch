@@ -1,8 +1,8 @@
-commit 6d626619a0d3d71c12608529e493712c78085066
+commit 78711261ce00ff7b84a7847fba98e4061a2a9d0e
 Author: Panu Matilainen <pmatilai@redhat.com>
-Date:   Mon Mar 23 14:48:01 2015 +0200
+Date:   Tue Mar 24 13:10:10 2015 +0200
 
-    Vhost-user support
+    Vhost-user support (rfc patch)
 
 diff --git a/INSTALL.DPDK.md b/INSTALL.DPDK.md
 index 5b61272..4d64078 100644
@@ -218,7 +218,7 @@ index 8d47eb9..14c4b35 100644
  AC_SUBST([OVS_CFLAGS])
  AC_SUBST([OVS_LDFLAGS])
 diff --git a/lib/netdev-dpdk.c b/lib/netdev-dpdk.c
-index bf69b10..de52c48 100644
+index bf69b10..0e71b72 100644
 --- a/lib/netdev-dpdk.c
 +++ b/lib/netdev-dpdk.c
 @@ -87,8 +87,12 @@ static struct vlog_rate_limit rl = VLOG_RATE_LIMIT_INIT(5, 20);
@@ -317,17 +317,16 @@ index bf69b10..de52c48 100644
  }
  
  static void
-@@ -1829,8 +1857,10 @@ int
+@@ -1829,7 +1857,9 @@ int
  dpdk_init(int argc, char **argv)
  {
      int result;
 +#ifdef VHOST_CUSE
      int base = 0;
-     char *pragram_name = argv[0];
 +#endif
+     char *pragram_name = argv[0];
  
      if (argc < 2 || strcmp(argv[1], "--dpdk"))
-         return 0;
 @@ -1839,6 +1869,7 @@ dpdk_init(int argc, char **argv)
      argc--;
      argv++;
@@ -336,11 +335,15 @@ index bf69b10..de52c48 100644
      /* If the cuse_dev_name parameter has been provided, set 'cuse_dev_name' to
       * this string if it meets the correct criteria. Otherwise, set it to the
       * default (vhost-net).
-@@ -1879,11 +1910,15 @@ dpdk_init(int argc, char **argv)
-     if (argc > result) {
-         argv[result] = argv[0];
+@@ -1861,6 +1892,7 @@ dpdk_init(int argc, char **argv)
+         cuse_dev_name = "vhost-net";
+         VLOG_INFO("No cuse_dev_name provided - defaulting to /dev/vhost-net");
      }
 +#endif
+ 
+     /* Keep the program name argument as this is needed for call to
+      * rte_eal_init()
+@@ -1882,8 +1914,11 @@ dpdk_init(int argc, char **argv)
  
      /* We are called from the main thread here */
      thread_set_nonpmd();
