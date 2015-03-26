@@ -1,19 +1,14 @@
-commit 60ff5923a96acd938ea7ba2bf0fbfddd017175a1
+commit adc2ef9ec27dd7fa2502c55a3c12da96910d0e5e
 Author: Panu Matilainen <pmatilai@redhat.com>
-Date:   Thu Mar 5 10:17:51 2015 +0200
+Date:   Mon Mar 23 14:42:32 2015 +0200
 
-    netdev-dpdk: Support DPDK >= 2.0 unified RSS offload types too
-    
-    RSS offload types were unified and simplified in DPDK 2.0, easily
-    handled with an ifdef though.
-    
-    Signed-off-by: Panu Matilainen <pmatilai@redhat.com>
+    Support DPDK 2.0
 
 diff --git a/lib/netdev-dpdk.c b/lib/netdev-dpdk.c
-index 1ba8310..b095826 100644
+index 4e16f39..ee98ba0 100644
 --- a/lib/netdev-dpdk.c
 +++ b/lib/netdev-dpdk.c
-@@ -97,8 +97,12 @@ static const struct rte_eth_conf port_conf = {
+@@ -117,8 +117,12 @@ static const struct rte_eth_conf port_conf = {
      .rx_adv_conf = {
          .rss_conf = {
              .rss_key = NULL,

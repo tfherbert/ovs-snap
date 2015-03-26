@@ -4,9 +4,11 @@
 %bcond_without dpdk
 %define dpdk_ver 1.8.0
 
+%bcond_with vhost_user
+
 %define ver 2.3.90
 %define rel 3
-%define snapver 9908.git2c9907cd
+%define snapver 9928.gitda79ce2b
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -36,7 +38,7 @@ Patch3: openvswitch-2.3.90-dpdk-options.patch
 # DPDK commit b12964f621dcb9bc0f71975c9ab2b5c9b58eed39 changed TCP_RSS defs
 Patch4: openvswitch-2.3.90-rss-offload.patch
 # Rebased from http://openvswitch.org/pipermail/dev/2015-March/052679.html
-Patch5: openvswitch-2.3.90-vhost-user-3.patch
+Patch5: openvswitch-2.3.90-vhost-user-4.patch
 
 ExcludeArch: ppc
 
@@ -101,7 +103,9 @@ files needed to build an external application.
 
 %patch3 -p1 -b .dpdk-options
 %patch4 -p1 -b .rss-offload
+%if %{with vhost_user}
 %patch5 -p1 -b .vhost-user
+%endif
 
 %build
 %if %{with dpdk}
@@ -325,6 +329,16 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Thu Mar 26 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9928.gitda79ce2b.3
+- Rebuild for dropped IVSHMEM in dpdk
+
+* Wed Mar 25 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9928.gitda79ce2b.2
+- Make vhost-user conditional, disabled by default for now 
+
+* Wed Mar 25 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9928.gitda79ce2b.1
+- New snapshot, 1GB hugepages no longer required
+- Rebase vhost-user patch again
+
 * Tue Mar 24 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9908.git2c9907cd.3
 - Yesterdays vhost-user patch was very broken...
 
