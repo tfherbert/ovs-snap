@@ -7,8 +7,8 @@
 %bcond_with vhost_user
 
 %define ver 2.3.90
-%define rel 3
-%define snapver 9928.gitda79ce2b
+%define rel 1
+%define snapver 9950.git4e5e44e3
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -52,6 +52,11 @@ BuildRequires: groff graphviz
 BuildRequires: dpdk-devel >= %{dpdk_ver}
 BuildRequires: autoconf automake fuse-devel
 Provides: %{name}-dpdk = %{version}-%{release}
+%if %{with vhost_user}
+Requires: dpdk(vhost_user)
+%else
+Requires: dpdk(vhost_cuse)
+%endif
 %endif
 
 Requires: openssl iproute module-init-tools
@@ -329,6 +334,10 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Thu Mar 26 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9950.git4e5e44e3.1
+- New snapshot
+- Add dependency for dpdk vhost-user/cuse support
+
 * Thu Mar 26 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9928.gitda79ce2b.3
 - Rebuild for dropped IVSHMEM in dpdk
 
