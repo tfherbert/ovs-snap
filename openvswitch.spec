@@ -8,7 +8,7 @@
 
 %define ver 2.3.90
 %define rel 1
-%define snapver 9950.git4e5e44e3
+%define snapver 9960.git508624b6
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -334,6 +334,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Wed Apr 01 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9960.git508624b6.1
+- New snapshot
+
 * Thu Mar 26 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9950.git4e5e44e3.1
 - New snapshot
 - Add dependency for dpdk vhost-user/cuse support
