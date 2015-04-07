@@ -4,11 +4,11 @@
 %bcond_without dpdk
 %define dpdk_ver 1.8.0
 
-%bcond_with vhost_user
+%bcond_without vhost_user
 
 %define ver 2.3.90
 %define rel 1
-%define snapver 9960.git508624b6
+%define snapver 9961.gitb3cceba0
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -37,8 +37,8 @@ Source100: ovs-snapshot.sh
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 # DPDK commit b12964f621dcb9bc0f71975c9ab2b5c9b58eed39 changed TCP_RSS defs
 Patch4: openvswitch-2.3.90-rss-offload.patch
-# Rebased from http://openvswitch.org/pipermail/dev/2015-March/052679.html
-Patch5: openvswitch-2.3.90-vhost-user-4.patch
+# Based on http://openvswitch.org/pipermail/dev/2015-March/052679.html
+Patch5: openvswitch-2.3.90-vhost-user-7.patch
 
 ExcludeArch: ppc
 
@@ -50,12 +50,13 @@ BuildRequires: groff graphviz
 
 %if %{with dpdk}
 BuildRequires: dpdk-devel >= %{dpdk_ver}
-BuildRequires: autoconf automake fuse-devel
+BuildRequires: autoconf automake
 Provides: %{name}-dpdk = %{version}-%{release}
 %if %{with vhost_user}
 Requires: dpdk(vhost_user)
 %else
 Requires: dpdk(vhost_cuse)
+BuildRequires: fuse-devel
 %endif
 %endif
 
@@ -334,6 +335,11 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Thu Apr 02 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9961.gitb3cceba0.1
+- New snapshot
+- Switch to vhost-user now that it actually works (with updated patch)
+- Only buildrequire fuse-devel with vhost-cuse
+
 * Wed Apr 01 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9960.git508624b6.1
 - New snapshot
 
