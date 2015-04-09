@@ -7,7 +7,7 @@
 %bcond_without vhost_user
 
 %define ver 2.3.90
-%define rel 1
+%define rel 2
 %define snapver 9961.gitb3cceba0
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -33,6 +33,8 @@ Source0: %{name}-%{srcver}.tar.gz
 # snapshot creation script, not used for build itself
 Source100: ovs-snapshot.sh
 
+# Use smaller dpdk rx burst size for improved vhost performance
+Patch1: openvswitch-2.3.90-dpdk-rxburst.patch
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 # DPDK commit b12964f621dcb9bc0f71975c9ab2b5c9b58eed39 changed TCP_RSS defs
@@ -107,6 +109,7 @@ files needed to build an external application.
 %prep
 %setup -q -n %{name}-%{srcver}
 
+%patch1 -p1 -b .dpdk-rxburst
 %patch3 -p1 -b .dpdk-options
 %patch4 -p1 -b .rss-offload
 %if %{with vhost_user}
@@ -335,6 +338,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Thu Apr 09 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9961.gitb3cceba0.2
+- Use smaller rx burst size to improve vhost performance
+
 * Thu Apr 02 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9961.gitb3cceba0.1
 - New snapshot
 - Switch to vhost-user now that it actually works (with updated patch)
