@@ -7,8 +7,8 @@
 %bcond_without vhost_user
 
 %define ver 2.3.90
-%define rel 2
-%define snapver 9961.gitb3cceba0
+%define rel 1
+%define snapver 10031.gitf097013a
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -338,8 +338,11 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Thu Apr 16 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10031.gitf097013a.1
+- New snapshot, including pmd statistics
+2
 * Thu Apr 09 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9961.gitb3cceba0.2
-- Use smaller rx burst size to improve vhost performance
+- Use smaller rx burst size to supposedly improve vhost performance
 
 * Thu Apr 02 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-9961.gitb3cceba0.1
 - New snapshot
