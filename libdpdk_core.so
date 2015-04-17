@@ -1,0 +1,23 @@
+GROUP (
+  librte_eal.so
+  librte_mempool.so
+  librte_malloc.so
+  librte_hash.so
+  librte_ring.so
+  librte_mbuf.so
+  librte_cmdline.so
+  librte_kvargs.so
+  librte_vhost.so
+  libethdev.so
+
+  librte_pmd_pcap.so
+  librte_pmd_bond.so
+  librte_pmd_af_packet.so
+  librte_pmd_ixgbe.so
+  librte_pmd_enic.so
+  librte_pmd_e1000.so
+  librte_pmd_ring.so
+  librte_pmd_fm10k.so
+  librte_pmd_i40e.so
+  librte_pmd_null.so
+)

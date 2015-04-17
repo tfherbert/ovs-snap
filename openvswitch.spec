@@ -7,7 +7,7 @@
 %bcond_without vhost_user
 
 %define ver 2.3.90
-%define rel 1
+%define rel 2
 %define snapver 10031.gitf097013a
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -32,9 +32,13 @@ Source0: %{name}-%{srcver}.tar.gz
 
 # snapshot creation script, not used for build itself
 Source100: ovs-snapshot.sh
+# custom linker script for dpdk
+Source101: libdpdk_core.so
 
 # Use smaller dpdk rx burst size for improved vhost performance
 Patch1: openvswitch-2.3.90-dpdk-rxburst.patch
+# Use our own linker script
+Patch2: openvswitch-2.3.90-dpdk-lib.patch
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 # DPDK commit b12964f621dcb9bc0f71975c9ab2b5c9b58eed39 changed TCP_RSS defs
@@ -110,11 +114,16 @@ files needed to build an external application.
 %setup -q -n %{name}-%{srcver}
 
 %patch1 -p1 -b .dpdk-rxburst
+%patch2 -p1 -b .dpdk-lib
 %patch3 -p1 -b .dpdk-options
 %patch4 -p1 -b .rss-offload
 %if %{with vhost_user}
 %patch5 -p1 -b .vhost-user
 %endif
+
+# libintel_dpdk is crazy as it brings in tonne of libs we dont need,
+# use a custom linker script tailored to our needs
+cp %{SOURCE101} .
 
 %build
 %if %{with dpdk}
@@ -338,6 +347,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Fri Apr 17 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10031.gitf097013a.2
+- Use a custom dpdk linker script to avoid excessive lib dependencies
+
 * Thu Apr 16 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10031.gitf097013a.1
 - New snapshot, including pmd statistics
 2
