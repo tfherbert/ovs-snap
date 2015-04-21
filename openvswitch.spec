@@ -1,3 +1,8 @@
+# For dpdk-cuse repo, behave as if --without vhost_user was given on cli
+%if "%{?copr_projectname}" == "dpdk-cuse"
+%define _without_vhost_user     --without-vhost_user
+%endif
+
 %global _hardened_build 1
 
 # option to build without dpdk
@@ -7,7 +12,7 @@
 %bcond_without vhost_user
 
 %define ver 2.3.90
-%define rel 2
+%define rel 3
 %define snapver 10031.gitf097013a
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -347,6 +352,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Tue Apr 21 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10031.gitf097013a.3
+- Handle vhost-user/cuse selection automatically based on the copr repo name
+
 * Fri Apr 17 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10031.gitf097013a.2
 - Use a custom dpdk linker script to avoid excessive lib dependencies
 
