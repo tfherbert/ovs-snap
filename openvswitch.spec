@@ -12,7 +12,7 @@
 %bcond_without vhost_user
 
 %define ver 2.3.90
-%define rel 3
+%define rel 4
 %define snapver 10031.gitf097013a
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -42,14 +42,15 @@ Source101: libdpdk_core.so
 
 # Use smaller dpdk rx burst size for improved vhost performance
 Patch1: openvswitch-2.3.90-dpdk-rxburst.patch
-# Use our own linker script
-Patch2: openvswitch-2.3.90-dpdk-lib.patch
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
-# DPDK commit b12964f621dcb9bc0f71975c9ab2b5c9b58eed39 changed TCP_RSS defs
-Patch4: openvswitch-2.3.90-rss-offload.patch
-# Based on http://openvswitch.org/pipermail/dev/2015-March/052679.html
-Patch5: openvswitch-2.3.90-vhost-user-7.patch
+# http://openvswitch.org/pipermail/dev/2015-April/054302.html
+Patch4: openvswitch-2.3.90-dpdk-2.0.patch
+# http://openvswitch.org/pipermail/dev/2015-March/052680.html
+Patch5: openvswitch-2.3.90-vhost-user-8.patch
+
+# Use our own linker script
+Patch20: openvswitch-2.3.90-dpdk-lib-1.patch
 
 ExcludeArch: ppc
 
@@ -119,12 +120,11 @@ files needed to build an external application.
 %setup -q -n %{name}-%{srcver}
 
 %patch1 -p1 -b .dpdk-rxburst
-%patch2 -p1 -b .dpdk-lib
 %patch3 -p1 -b .dpdk-options
-%patch4 -p1 -b .rss-offload
-%if %{with vhost_user}
+%patch4 -p1 -b .dpdk-2.0
 %patch5 -p1 -b .vhost-user
-%endif
+
+%patch20 -p1 -b .dpdk-lib
 
 # libintel_dpdk is crazy as it brings in tonne of libs we dont need,
 # use a custom linker script tailored to our needs
@@ -134,8 +134,6 @@ cp %{SOURCE101} .
 %if %{with dpdk}
 unset RTE_SDK
 . /etc/profile.d/dpdk-sdk-%{_arch}.sh
-# Dunno, this is needed for rhel-7 builds, gcc version difference perhaps?
-export CFLAGS="%{optflags} -msse4.1"
 %endif
 
 autoreconf -i
@@ -143,6 +141,9 @@ autoreconf -i
 	--enable-ssl \
 %if %{with dpdk}
 	--with-dpdk=${RTE_SDK}/${RTE_TARGET} \
+%if ! %{with vhost_user}
+	--with-vhostcuse \
+%endif
 %endif
 	--with-pkidir=%{_sharedstatedir}/openvswitch/pki \
 
@@ -352,6 +353,10 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Fri Apr 24 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10031.gitf097013a.4
+- Update DPDK 2.0 patch to what has been submitted upstream
+- Update vhost-user patch to current public RFC patch
+
 * Tue Apr 21 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10031.gitf097013a.3
 - Handle vhost-user/cuse selection automatically based on the copr repo name
 

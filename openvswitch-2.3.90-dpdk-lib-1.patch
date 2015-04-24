@@ -1,0 +1,16 @@
+diff -up openvswitch-2.3.90-10031.gitf097013a/acinclude.m4.dpdk-lib openvswitch-2.3.90-10031.gitf097013a/acinclude.m4
+--- openvswitch-2.3.90-10031.gitf097013a/acinclude.m4.dpdk-lib	2015-04-24 15:12:23.625746382 +0300
++++ openvswitch-2.3.90-10031.gitf097013a/acinclude.m4	2015-04-24 15:16:15.584205803 +0300
+@@ -169,9 +169,9 @@ AC_DEFUN([OVS_CHECK_DPDK], [
+     RTE_SDK=$with_dpdk
+ 
+     DPDK_INCLUDE=$RTE_SDK/include
+-    DPDK_LIB_DIR=$RTE_SDK/lib
+-    DPDK_LIB="-lintel_dpdk"
+-    DPDK_EXTRA_LIB="-lfuse"
++    DPDK_LIB_DIR=.
++    DPDK_LIB="-ldpdk_core"
++    DPDK_EXTRA_LIB=""
+ 
+     ovs_save_CFLAGS="$CFLAGS"
+     ovs_save_LDFLAGS="$LDFLAGS"
