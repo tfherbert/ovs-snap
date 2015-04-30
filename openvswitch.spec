@@ -12,8 +12,8 @@
 %bcond_without vhost_user
 
 %define ver 2.3.90
-%define rel 4
-%define snapver 10031.gitf097013a
+%define rel 1
+%define snapver 10098.git543342a4
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -44,10 +44,8 @@ Source101: libdpdk_core.so
 Patch1: openvswitch-2.3.90-dpdk-rxburst.patch
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
-# http://openvswitch.org/pipermail/dev/2015-April/054302.html
-Patch4: openvswitch-2.3.90-dpdk-2.0.patch
-# http://openvswitch.org/pipermail/dev/2015-March/052680.html
-Patch5: openvswitch-2.3.90-vhost-user-8.patch
+# http://openvswitch.org/pipermail/dev/2015-April/054824.html
+Patch5: openvswitch-2.3.90-vhost-user-v3.patch
 
 # Use our own linker script
 Patch20: openvswitch-2.3.90-dpdk-lib-1.patch
@@ -121,7 +119,6 @@ files needed to build an external application.
 
 %patch1 -p1 -b .dpdk-rxburst
 %patch3 -p1 -b .dpdk-options
-%patch4 -p1 -b .dpdk-2.0
 %patch5 -p1 -b .vhost-user
 
 %patch20 -p1 -b .dpdk-lib
@@ -353,6 +350,10 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Thu Apr 30 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10098.git543342a4.1
+- Update to new snapshot with official DPDK 2.0 support
+- Update to vhost-user RFC v3 with socket directory specification support
+
 * Fri Apr 24 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10031.gitf097013a.4
 - Update DPDK 2.0 patch to what has been submitted upstream
 - Update vhost-user patch to current public RFC patch
