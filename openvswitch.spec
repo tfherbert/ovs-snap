@@ -11,8 +11,11 @@
 
 %bcond_without vhost_user
 
+# enable experimental (non-upstreamed) user-datapath performance patches
+%bcond_with user_perf
+
 %define ver 2.3.90
-%define rel 2
+%define rel 3
 %define snapver 10098.git543342a4
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -48,6 +51,14 @@ Patch3: openvswitch-2.3.90-dpdk-options.patch
 Patch5: openvswitch-2.3.90-vhost-user-v3.patch
 # Support for adding DPDK ports via initscripts
 Patch6: openvswitch-2.3.90-dpdk-ports-1.patch
+
+Patch10: ovs-perf-1.patch
+Patch11: ovs-perf-2.patch
+Patch12: ovs-perf-3.patch
+Patch13: ovs-perf-4.patch
+Patch14: ovs-perf-5.patch
+Patch15: ovs-perf-6.patch
+Patch16: ovs-perf-7.patch
 
 # Use our own linker script
 Patch20: openvswitch-2.3.90-dpdk-lib-1.patch
@@ -123,6 +134,16 @@ files needed to build an external application.
 %patch3 -p1 -b .dpdk-options
 %patch5 -p1 -b .vhost-user
 %patch6 -p1 -b .dpdk-ports
+
+%if %{with user_perf}
+%patch10 -p1 -b .ovs-perf1
+%patch11 -p1 -b .ovs-perf2
+%patch12 -p1 -b .ovs-perf3
+%patch13 -p1 -b .ovs-perf4
+%patch14 -p1 -b .ovs-perf5
+%patch15 -p1 -b .ovs-perf6
+%patch16 -p1 -b .ovs-perf7
+%endif
 
 %patch20 -p1 -b .dpdk-lib
 
@@ -353,6 +374,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Thu May 07 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10098.git543342a4.3
+- Add build option for userspace datapath performance improvement patch series
+
 * Tue May 05 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10098.git543342a4.2
 - DPDK port configuration via network-scripts, take I
 

@@ -1,0 +1,296 @@
+
+In 'struct ofpbuf' the 'frame' pointer was used to parse different kinds of
+data (Ethernet, OpenFlow, Netlink attributes).  For Ethernet packets the
+'frame' pointer was supposed to have the same value as the 'data'
+pointer.
+
+Since 'struct dp_packet' is only used for Ethernet packets, there's no
+need for a separate 'frame' pointer: we can use the 'data' pointer
+instead.
+
+Signed-off-by: Daniele Di Proietto <diproiettod at vmware.com <http://openvswitch.org/mailman/listinfo/dev>>
+---
+ lib/dp-packet.c           | 17 ++----------
+ lib/dp-packet.h           | 71 +++++++++++++++++++----------------------------
+ lib/flow.c                |  2 +-
+ lib/packets.c             |  6 ++--
+ lib/rstp-state-machines.c |  2 +-
+ lib/stp.c                 |  2 +-
+ 6 files changed, 37 insertions(+), 63 deletions(-)
+
+diff --git a/lib/dp-packet.c b/lib/dp-packet.c
+index b2d9d5c..375b7b7 100644
+--- a/lib/dp-packet.c
++++ b/lib/dp-packet.c
+@@ -27,7 +27,6 @@ dp_packet_init__(struct dp_packet *b, size_t allocated, enum dp_packet_source so
+ {
+     b->allocated = allocated;
+     b->source = source;
+-    b->frame = NULL;
+     b->l2_pad_size = 0;
+     b->l2_5_ofs = b->l3_ofs = b->l4_ofs = UINT16_MAX;
+     b->md = PKT_METADATA_INITIALIZER(0);
+@@ -164,12 +163,6 @@ dp_packet_clone_with_headroom(const struct dp_packet *buffer, size_t headroom)
+     new_buffer = dp_packet_clone_data_with_headroom(dp_packet_data(buffer),
+                                                  dp_packet_size(buffer),
+                                                  headroom);
+-    if (buffer->frame) {
+-        uintptr_t data_delta
+-            = (char *)dp_packet_data(new_buffer) - (char *)dp_packet_data(buffer);
+-
+-        new_buffer->frame = (char *) buffer->frame + data_delta;
+-    }
+     new_buffer->l2_pad_size = buffer->l2_pad_size;
+     new_buffer->l2_5_ofs = buffer->l2_5_ofs;
+     new_buffer->l3_ofs = buffer->l3_ofs;
+@@ -255,11 +248,6 @@ dp_packet_resize__(struct dp_packet *b, size_t new_headroom, size_t new_tailroom
+ 
+     new_data = (char *) new_base + new_headroom;
+     if (dp_packet_data(b) != new_data) {
+-        if (b->frame) {
+-            uintptr_t data_delta = (char *) new_data - (char *) dp_packet_data(b);
+-
+-            b->frame = (char *) b->frame + data_delta;
+-        }
+         dp_packet_set_data(b, new_data);
+     }
+ }
+@@ -479,12 +467,11 @@ dp_packet_resize_l2_5(struct dp_packet *b, int increment)
+         dp_packet_pull(b, -increment);
+     }
+ 
+-    b->frame = dp_packet_data(b);
+     /* Adjust layer offsets after l2_5. */
+     dp_packet_adjust_layer_offset(&b->l3_ofs, increment);
+     dp_packet_adjust_layer_offset(&b->l4_ofs, increment);
+ 
+-    return b->frame;
++    return dp_packet_data(b);
+ }
+ 
+ /* Adjust the size of the l2 portion of the dp_packet, updating the l2
+@@ -495,5 +482,5 @@ dp_packet_resize_l2(struct dp_packet *b, int increment)
+ {
+     dp_packet_resize_l2_5(b, increment);
+     dp_packet_adjust_layer_offset(&b->l2_5_ofs, increment);
+-    return b->frame;
++    return dp_packet_data(b);
+ }
+diff --git a/lib/dp-packet.h b/lib/dp-packet.h
+index 29a883b..54a3445 100644
+--- a/lib/dp-packet.h
++++ b/lib/dp-packet.h
+@@ -36,25 +36,8 @@ enum OVS_PACKED_ENUM dp_packet_source {
+                                   ref to build_dp_packet() in netdev-dpdk. */
+ };
+ 
+-/* Buffer for holding arbitrary data.  An dp_packet is automatically reallocated
++/* Buffer for holding packet data.  A dp_packet is automatically reallocated
+  * as necessary if it grows too large for the available memory.
+- *
+- * 'frame' and offset conventions:
+- *
+- * Network frames (aka "packets"): 'frame' MUST be set to the start of the
+- *    packet, layer offsets MAY be set as appropriate for the packet.
+- *    Additionally, we assume in many places that the 'frame' and 'data' are
+- *    the same for packets.
+- *
+- * OpenFlow messages: 'frame' points to the start of the OpenFlow
+- *    header, while 'l3_ofs' is the length of the OpenFlow header.
+- *    When parsing, the 'data' will move past these, as data is being
+- *    pulled from the OpenFlow message.
+- *
+- * Actions: When encoding OVS action lists, the 'frame' is used
+- *    as a pointer to the beginning of the current action (see ofpact_put()).
+- *
+- * rconn: Reuses 'frame' as a private pointer while queuing.
+  */
+ struct dp_packet {
+ #ifdef DPDK_NETDEV
+@@ -67,16 +50,14 @@ struct dp_packet {
+ #endif
+     uint32_t allocated;         /* Number of bytes allocated. */
+ 
+-    void *frame;                /* Packet frame start, or NULL. */
+     enum dp_packet_source source;  /* Source of memory allocated as 'base'. */
+-    uint8_t l2_pad_size;        /* Detected l2 padding size.
+-                                 * Padding is non-pullable. */
+-    uint16_t l2_5_ofs;          /* MPLS label stack offset from 'frame', or
+-                                 * UINT16_MAX */
+-    uint16_t l3_ofs;            /* Network-level header offset from 'frame',
+-                                   or UINT16_MAX. */
+-    uint16_t l4_ofs;            /* Transport-level header offset from 'frame',
+-                                   or UINT16_MAX. */
++    uint8_t l2_pad_size;           /* Detected l2 padding size.
++                                    * Padding is non-pullable. */
++    uint16_t l2_5_ofs;             /* MPLS label stack offset, or UINT16_MAX */
++    uint16_t l3_ofs;               /* Network-level header offset,
++                                    * or UINT16_MAX. */
++    uint16_t l4_ofs;               /* Transport-level header offset,
++                                      or UINT16_MAX. */
+     struct pkt_metadata md;
+ };
+ 
+@@ -91,7 +72,7 @@ static inline void dp_packet_set_size(struct dp_packet *, uint32_t);
+ void * dp_packet_resize_l2(struct dp_packet *, int increment);
+ void * dp_packet_resize_l2_5(struct dp_packet *, int increment);
+ static inline void * dp_packet_l2(const struct dp_packet *);
+-static inline void dp_packet_set_frame(struct dp_packet *, void *);
++static inline void dp_packet_reset_offsets(struct dp_packet *);
+ static inline uint8_t dp_packet_l2_pad_size(const struct dp_packet *);
+ static inline void dp_packet_set_l2_pad_size(struct dp_packet *, uint8_t);
+ static inline void * dp_packet_l2_5(const struct dp_packet *);
+@@ -265,18 +246,17 @@ static inline bool dp_packet_equal(const struct dp_packet *a, const struct dp_pa
+            memcmp(dp_packet_data(a), dp_packet_data(b), dp_packet_size(a)) == 0;
+ }
+ 
+-/* Get the start if the Ethernet frame.  'l3_ofs' marks the end of the l2
++/* Get the start of the Ethernet frame.  'l3_ofs' marks the end of the l2
+  * headers, so return NULL if it is not set. */
+ static inline void * dp_packet_l2(const struct dp_packet *b)
+ {
+-    return (b->l3_ofs != UINT16_MAX) ? b->frame : NULL;
++    return (b->l3_ofs != UINT16_MAX) ? dp_packet_data(b) : NULL;
+ }
+ 
+-/* Sets the packet frame start pointer and resets all layer offsets.
+- * l3 offset must be set before 'l2' can be retrieved. */
+-static inline void dp_packet_set_frame(struct dp_packet *b, void *packet)
++/* Resets all layer offsets.  'l3' offset must be set before 'l2' can be
++ * retrieved. */
++static inline void dp_packet_reset_offsets(struct dp_packet *b)
+ {
+-    b->frame = packet;
+     b->l2_pad_size = 0;
+     b->l2_5_ofs = UINT16_MAX;
+     b->l3_ofs = UINT16_MAX;
+@@ -296,32 +276,40 @@ static inline void dp_packet_set_l2_pad_size(struct dp_packet *b, uint8_t pad_si
+ 
+ static inline void * dp_packet_l2_5(const struct dp_packet *b)
+ {
+-    return b->l2_5_ofs != UINT16_MAX ? (char *)b->frame + b->l2_5_ofs : NULL;
++    return b->l2_5_ofs != UINT16_MAX
++           ? (char *) dp_packet_data(b) + b->l2_5_ofs
++           : NULL;
+ }
+ 
+ static inline void dp_packet_set_l2_5(struct dp_packet *b, void *l2_5)
+ {
+-    b->l2_5_ofs = l2_5 ? (char *)l2_5 - (char *)b->frame : UINT16_MAX;
++    b->l2_5_ofs = l2_5
++                  ? (char *) l2_5 - (char *) dp_packet_data(b)
++                  : UINT16_MAX;
+ }
+ 
+ static inline void * dp_packet_l3(const struct dp_packet *b)
+ {
+-    return b->l3_ofs != UINT16_MAX ? (char *)b->frame + b->l3_ofs : NULL;
++    return b->l3_ofs != UINT16_MAX
++           ? (char *) dp_packet_data(b) + b->l3_ofs
++           : NULL;
+ }
+ 
+ static inline void dp_packet_set_l3(struct dp_packet *b, void *l3)
+ {
+-    b->l3_ofs = l3 ? (char *)l3 - (char *)b->frame : UINT16_MAX;
++    b->l3_ofs = l3 ? (char *) l3 - (char *) dp_packet_data(b) : UINT16_MAX;
+ }
+ 
+ static inline void * dp_packet_l4(const struct dp_packet *b)
+ {
+-    return b->l4_ofs != UINT16_MAX ? (char *)b->frame + b->l4_ofs : NULL;
++    return b->l4_ofs != UINT16_MAX
++           ? (char *) dp_packet_data(b) + b->l4_ofs
++           : NULL;
+ }
+ 
+ static inline void dp_packet_set_l4(struct dp_packet *b, void *l4)
+ {
+-    b->l4_ofs = l4 ? (char *)l4 - (char *)b->frame : UINT16_MAX;
++    b->l4_ofs = l4 ? (char *) l4 - (char *) dp_packet_data(b) : UINT16_MAX;
+ }
+ 
+ static inline size_t dp_packet_l4_size(const struct dp_packet *b)
+@@ -471,8 +459,7 @@ static inline void dp_packet_set_data(struct dp_packet *b, void *data)
+ static inline void dp_packet_reset_packet(struct dp_packet *b, int off)
+ {
+     dp_packet_set_size(b, dp_packet_size(b) - off);
+-    dp_packet_set_data(b, (void *) ((unsigned char *) b->frame + off));
+-    b->frame = NULL;
++    dp_packet_set_data(b, ((unsigned char *) dp_packet_data(b) + off));
+     b->l2_5_ofs = b->l3_ofs = b->l4_ofs = UINT16_MAX;
+ }
+ 
+diff --git a/lib/flow.c b/lib/flow.c
+index e54280a..0f9ee50 100644
+--- a/lib/flow.c
++++ b/lib/flow.c
+@@ -449,7 +449,7 @@ miniflow_extract(struct dp_packet *packet, struct miniflow *dst)
+ 
+     /* Initialize packet's layer pointer and offsets. */
+     l2 = data;
+-    dp_packet_set_frame(packet, data);
++    dp_packet_reset_offsets(packet);
+ 
+     /* Must have full Ethernet header to proceed. */
+     if (OVS_UNLIKELY(size < sizeof(struct eth_header))) {
+diff --git a/lib/packets.c b/lib/packets.c
+index 419c6af..016b12b 100644
+--- a/lib/packets.c
++++ b/lib/packets.c
+@@ -170,7 +170,7 @@ compose_rarp(struct dp_packet *b, const uint8_t eth_src[ETH_ADDR_LEN])
+     memcpy(arp->ar_tha, eth_src, ETH_ADDR_LEN);
+     put_16aligned_be32(&arp->ar_tpa, htonl(0));
+ 
+-    dp_packet_set_frame(b, eth);
++    dp_packet_reset_offsets(b);
+     dp_packet_set_l3(b, arp);
+ }
+ 
+@@ -579,7 +579,7 @@ eth_compose(struct dp_packet *b, const uint8_t eth_dst[ETH_ADDR_LEN],
+     memcpy(eth->eth_src, eth_src, ETH_ADDR_LEN);
+     eth->eth_type = htons(eth_type);
+ 
+-    dp_packet_set_frame(b, eth);
++    dp_packet_reset_offsets(b);
+     dp_packet_set_l3(b, data);
+ 
+     return data;
+@@ -1040,7 +1040,7 @@ compose_arp(struct dp_packet *b, const uint8_t eth_src[ETH_ADDR_LEN],
+     put_16aligned_be32(&arp->ar_spa, ip_src);
+     put_16aligned_be32(&arp->ar_tpa, ip_dst);
+ 
+-    dp_packet_set_frame(b, eth);
++    dp_packet_reset_offsets(b);
+     dp_packet_set_l3(b, arp);
+ }
+ 
+diff --git a/lib/rstp-state-machines.c b/lib/rstp-state-machines.c
+index 7e23789..f55221f 100644
+--- a/lib/rstp-state-machines.c
++++ b/lib/rstp-state-machines.c
+@@ -696,7 +696,7 @@ rstp_send_bpdu(struct rstp_port *p, const void *bpdu, size_t bpdu_size)
+     pkt = dp_packet_new(ETH_HEADER_LEN + LLC_HEADER_LEN + bpdu_size);
+     eth = dp_packet_put_zeros(pkt, sizeof *eth);
+     llc = dp_packet_put_zeros(pkt, sizeof *llc);
+-    dp_packet_set_frame(pkt, eth);
++    dp_packet_reset_offsets(pkt);
+     dp_packet_set_l3(pkt, dp_packet_put(pkt, bpdu, bpdu_size));
+ 
+     /* 802.2 header. */
+diff --git a/lib/stp.c b/lib/stp.c
+index ec8b01a..22bd93a 100644
+--- a/lib/stp.c
++++ b/lib/stp.c
+@@ -1576,7 +1576,7 @@ stp_send_bpdu(struct stp_port *p, const void *bpdu, size_t bpdu_size)
+     pkt = dp_packet_new(ETH_HEADER_LEN + LLC_HEADER_LEN + bpdu_size);
+     eth = dp_packet_put_zeros(pkt, sizeof *eth);
+     llc = dp_packet_put_zeros(pkt, sizeof *llc);
+-    dp_packet_set_frame(pkt, eth);
++    dp_packet_reset_offsets(pkt);
+     dp_packet_set_l3(pkt, dp_packet_put(pkt, bpdu, bpdu_size));
+ 
+     /* 802.2 header. */
+-- 
+2.1.4
+

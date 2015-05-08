@@ -1,0 +1,268 @@
+
+The 'list' member is only used (two users) in the slow path.
+This commit removes it to reduce the struct size
+
+Signed-off-by: Daniele Di Proietto <diproiettod at vmware.com <http://openvswitch.org/mailman/listinfo/dev>>
+---
+ lib/dp-packet.c        | 13 -------------
+ lib/dp-packet.h        |  8 --------
+ lib/netdev-dummy.c     | 50 ++++++++++++++++++++++++++++++++++++++++++--------
+ ofproto/ofproto-dpif.c | 30 ++++++++++++++----------------
+ 4 files changed, 56 insertions(+), 45 deletions(-)
+
+diff --git a/lib/dp-packet.c b/lib/dp-packet.c
+index 8a4cf43..b2d9d5c 100644
+--- a/lib/dp-packet.c
++++ b/lib/dp-packet.c
+@@ -31,7 +31,6 @@ dp_packet_init__(struct dp_packet *b, size_t allocated, enum dp_packet_source so
+     b->l2_pad_size = 0;
+     b->l2_5_ofs = b->l3_ofs = b->l4_ofs = UINT16_MAX;
+     b->md = PKT_METADATA_INITIALIZER(0);
+-    list_poison(&b->list_node);
+ }
+ 
+ static void
+@@ -460,18 +459,6 @@ dp_packet_to_string(const struct dp_packet *b, size_t maxbytes)
+     return ds_cstr(&s);
+ }
+ 
+-/* Removes each of the "struct dp_packet"s on 'list' from the list and frees
+- * them.  */
+-void
+-dp_packet_list_delete(struct ovs_list *list)
+-{
+-    struct dp_packet *b;
+-
+-    LIST_FOR_EACH_POP (b, list_node, list) {
+-        dp_packet_delete(b);
+-    }
+-}
+-
+ static inline void
+ dp_packet_adjust_layer_offset(uint16_t *offset, int increment)
+ {
+diff --git a/lib/dp-packet.h b/lib/dp-packet.h
+index fd23d11..29a883b 100644
+--- a/lib/dp-packet.h
++++ b/lib/dp-packet.h
+@@ -78,7 +78,6 @@ struct dp_packet {
+     uint16_t l4_ofs;            /* Transport-level header offset from 'frame',
+                                    or UINT16_MAX. */
+     struct pkt_metadata md;
+-    struct ovs_list list_node;  /* Private list element for use by owner. */
+ };
+ 
+ static inline void * dp_packet_data(const struct dp_packet *);
+@@ -159,8 +158,6 @@ static inline void *dp_packet_try_pull(struct dp_packet *, size_t);
+ void *dp_packet_steal_data(struct dp_packet *);
+ 
+ char *dp_packet_to_string(const struct dp_packet *, size_t maxbytes);
+-static inline struct dp_packet *dp_packet_from_list(const struct ovs_list *);
+-void dp_packet_list_delete(struct ovs_list *);
+ static inline bool dp_packet_equal(const struct dp_packet *, const struct dp_packet *);
+ 
+ 
+@@ -262,11 +259,6 @@ static inline void *dp_packet_try_pull(struct dp_packet *b, size_t size)
+         ? dp_packet_pull(b, size) : NULL;
+ }
+ 
+-static inline struct dp_packet *dp_packet_from_list(const struct ovs_list *list)
+-{
+-    return CONTAINER_OF(list, struct dp_packet, list_node);
+-}
+-
+ static inline bool dp_packet_equal(const struct dp_packet *a, const struct dp_packet *b)
+ {
+     return dp_packet_size(a) == dp_packet_size(b) &&
+diff --git a/lib/netdev-dummy.c b/lib/netdev-dummy.c
+index 64f8f66..2d85a9c 100644
+--- a/lib/netdev-dummy.c
++++ b/lib/netdev-dummy.c
+@@ -84,6 +84,11 @@ struct dummy_packet_conn {
+     } u;
+ };
+ 
++struct pkt_list_node {
++    struct dp_packet *pkt;
++    struct ovs_list list_node;
++};
++
+ /* Protects 'dummy_list'. */
+ static struct ovs_mutex dummy_list_mutex = OVS_MUTEX_INITIALIZER;
+ 
+@@ -186,10 +191,14 @@ dummy_packet_stream_send(struct dummy_packet_stream *s, const void *buffer, size
+ {
+     if (list_size(&s->txq) < NETDEV_DUMMY_MAX_QUEUE) {
+         struct dp_packet *b;
++        struct pkt_list_node *node;
+ 
+         b = dp_packet_clone_data_with_headroom(buffer, size, 2);
+         put_unaligned_be16(dp_packet_push_uninit(b, 2), htons(size));
+-        list_push_back(&s->txq, &b->list_node);
++
++        node = xmalloc(sizeof *node);
++        node->pkt = b;
++        list_push_back(&s->txq, &node->list_node);
+     }
+ }
+ 
+@@ -202,16 +211,19 @@ dummy_packet_stream_run(struct netdev_dummy *dev, struct dummy_packet_stream *s)
+     stream_run(s->stream);
+ 
+     if (!list_is_empty(&s->txq)) {
++        struct pkt_list_node *txbuf_node;
+         struct dp_packet *txbuf;
+         int retval;
+ 
+-        txbuf = dp_packet_from_list(list_front(&s->txq));
++        ASSIGN_CONTAINER(txbuf_node, list_front(&s->txq), list_node);
++        txbuf = txbuf_node->pkt;
+         retval = stream_send(s->stream, dp_packet_data(txbuf), dp_packet_size(txbuf));
+ 
+         if (retval > 0) {
+             dp_packet_pull(txbuf, retval);
+             if (!dp_packet_size(txbuf)) {
+-                list_remove(&txbuf->list_node);
++                list_remove(&txbuf_node->list_node);
++                free(txbuf_node);
+                 dp_packet_delete(txbuf);
+             }
+         } else if (retval != -EAGAIN) {
+@@ -261,9 +273,15 @@ dummy_packet_stream_run(struct netdev_dummy *dev, struct dummy_packet_stream *s)
+ static void
+ dummy_packet_stream_close(struct dummy_packet_stream *s)
+ {
++    struct pkt_list_node *pkt;
++
+     stream_close(s->stream);
+     dp_packet_uninit(&s->rxbuf);
+-    dp_packet_list_delete(&s->txq);
++
++    LIST_FOR_EACH_POP(pkt, list_node, &s->txq) {
++        dp_packet_delete(pkt->pkt);
++        free(pkt);
++    }
+ }
+ 
+ static void
+@@ -794,10 +812,15 @@ netdev_dummy_rxq_destruct(struct netdev_rxq *rxq_)
+ {
+     struct netdev_rxq_dummy *rx = netdev_rxq_dummy_cast(rxq_);
+     struct netdev_dummy *netdev = netdev_dummy_cast(rx->up.netdev);
++    struct pkt_list_node *pkt;
+ 
+     ovs_mutex_lock(&netdev->mutex);
+     list_remove(&rx->node);
+-    dp_packet_list_delete(&rx->recv_queue);
++
++    LIST_FOR_EACH_POP(pkt, list_node, &rx->recv_queue) {
++        dp_packet_delete(pkt->pkt);
++        free(pkt);
++    }
+     ovs_mutex_unlock(&netdev->mutex);
+     seq_destroy(rx->seq);
+ }
+@@ -820,7 +843,11 @@ netdev_dummy_rxq_recv(struct netdev_rxq *rxq_, struct dp_packet **arr,
+ 
+     ovs_mutex_lock(&netdev->mutex);
+     if (!list_is_empty(&rx->recv_queue)) {
+-        packet = dp_packet_from_list(list_pop_front(&rx->recv_queue));
++        struct pkt_list_node *pkt_node;
++
++        ASSIGN_CONTAINER(pkt_node, list_pop_front(&rx->recv_queue), list_node);
++        packet = pkt_node->pkt;
++        free(pkt_node);
+         rx->recv_queue_len--;
+     } else {
+         packet = NULL;
+@@ -864,9 +891,13 @@ netdev_dummy_rxq_drain(struct netdev_rxq *rxq_)
+ {
+     struct netdev_rxq_dummy *rx = netdev_rxq_dummy_cast(rxq_);
+     struct netdev_dummy *netdev = netdev_dummy_cast(rx->up.netdev);
++    struct pkt_list_node *pkt;
+ 
+     ovs_mutex_lock(&netdev->mutex);
+-    dp_packet_list_delete(&rx->recv_queue);
++    LIST_FOR_EACH_POP(pkt, list_node, &rx->recv_queue) {
++        dp_packet_delete(pkt->pkt);
++        free(pkt);
++    }
+     rx->recv_queue_len = 0;
+     ovs_mutex_unlock(&netdev->mutex);
+ 
+@@ -1159,7 +1190,10 @@ eth_from_packet_or_flow(const char *s)
+ static void
+ netdev_dummy_queue_packet__(struct netdev_rxq_dummy *rx, struct dp_packet *packet)
+ {
+-    list_push_back(&rx->recv_queue, &packet->list_node);
++    struct pkt_list_node *pkt_node = xmalloc(sizeof *pkt_node);
++
++    pkt_node->pkt = packet;
++    list_push_back(&rx->recv_queue, &pkt_node->list_node);
+     rx->recv_queue_len++;
+     seq_change(rx->seq);
+ }
+diff --git a/ofproto/ofproto-dpif.c b/ofproto/ofproto-dpif.c
+index bf89321..d151bb7 100644
+--- a/ofproto/ofproto-dpif.c
++++ b/ofproto/ofproto-dpif.c
+@@ -2974,43 +2974,41 @@ static void
+ bundle_send_learning_packets(struct ofbundle *bundle)
+ {
+     struct ofproto_dpif *ofproto = bundle->ofproto;
+-    struct dp_packet *learning_packet;
+     int error, n_packets, n_errors;
+     struct mac_entry *e;
++    struct pkt_list {
++        struct ovs_list list_node;
++        struct ofport_dpif *port;
++        struct dp_packet *pkt;
++    } *pkt_node;
+     struct ovs_list packets;
+ 
+     list_init(&packets);
+     ovs_rwlock_rdlock(&ofproto->ml->rwlock);
+     LIST_FOR_EACH (e, lru_node, &ofproto->ml->lrus) {
+         if (mac_entry_get_port(ofproto->ml, e) != bundle) {
+-            void *port_void;
+-
+-            learning_packet = bond_compose_learning_packet(bundle->bond,
+-                                                           e->mac, e->vlan,
+-                                                           &port_void);
+-            /* Temporarily use 'frame' as a private pointer (see below). */
+-            ovs_assert(learning_packet->frame == dp_packet_data(learning_packet));
+-            learning_packet->frame = port_void;
+-            list_push_back(&packets, &learning_packet->list_node);
++            pkt_node = xmalloc(sizeof *pkt_node);
++            pkt_node->pkt = bond_compose_learning_packet(bundle->bond,
++                                                         e->mac, e->vlan,
++                                                         (void **)&pkt_node->port);
++            list_push_back(&packets, &pkt_node->list_node);
+         }
+     }
+     ovs_rwlock_unlock(&ofproto->ml->rwlock);
+ 
+     error = n_packets = n_errors = 0;
+-    LIST_FOR_EACH (learning_packet, list_node, &packets) {
++    LIST_FOR_EACH_POP (pkt_node, list_node, &packets) {
+         int ret;
+-        void *port_void = learning_packet->frame;
+ 
+-        /* Restore 'frame'. */
+-        learning_packet->frame = dp_packet_data(learning_packet);
+-        ret = ofproto_dpif_send_packet(port_void, learning_packet);
++        ret = ofproto_dpif_send_packet(pkt_node->port, pkt_node->pkt);
++        dp_packet_delete(pkt_node->pkt);
++        free(pkt_node);
+         if (ret) {
+             error = ret;
+             n_errors++;
+         }
+         n_packets++;
+     }
+-    dp_packet_list_delete(&packets);
+ 
+     if (n_errors) {
+         static struct vlog_rate_limit rl = VLOG_RATE_LIMIT_INIT(1, 5);
+-- 
+2.1.4
