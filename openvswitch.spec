@@ -15,7 +15,7 @@
 %bcond_with user_perf
 
 %define ver 2.3.90
-%define rel 3
+%define rel 4
 %define snapver 10098.git543342a4
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -374,6 +374,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Fri May 08 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10098.git543342a4.4
+- Include virtio driver in linker script to support OVS in a VM guest
+
 * Thu May 07 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10098.git543342a4.3
 - Add build option for userspace datapath performance improvement patch series
 
