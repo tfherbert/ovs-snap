@@ -1,15 +1,8 @@
-# For dpdk-cuse repo, behave as if --without vhost_user was given on cli
-%if "%{?copr_projectname}" == "dpdk-cuse"
-%define _without_vhost_user     --without-vhost_user
-%endif
-
 %global _hardened_build 1
 
 # option to build without dpdk
 %bcond_without dpdk
 %define dpdk_ver 1.8.0
-
-%bcond_without vhost_user
 
 %define ver 2.3.90
 %define rel 1
@@ -62,12 +55,6 @@ BuildRequires: groff graphviz
 BuildRequires: dpdk-devel >= %{dpdk_ver}
 BuildRequires: autoconf automake
 Provides: %{name}-dpdk = %{version}-%{release}
-%if %{with vhost_user}
-Requires: dpdk(vhost_user)
-%else
-Requires: dpdk(vhost_cuse)
-BuildRequires: fuse-devel
-%endif
 %endif
 
 Requires: openssl iproute module-init-tools
@@ -138,9 +125,6 @@ autoreconf -i
 	--enable-ssl \
 %if %{with dpdk}
 	--with-dpdk=${RTE_SDK}/${RTE_TARGET} \
-%if ! %{with vhost_user}
-	--with-vhostcuse \
-%endif
 %endif
 	--with-pkidir=%{_sharedstatedir}/openvswitch/pki \
 
@@ -353,6 +337,7 @@ rm -rf $RPM_BUILD_ROOT
 * Tue May 19 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10130.git8aaa125d.1
 - New snapshot
 - vhost-user patch v5 which is likely to be upstreamed
+- drop vhost-cuse support from spec
 
 * Wed May 13 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10120.git9899125a.2
 - vhost-user patch v4, defaulting to OVS rundir for sockets
