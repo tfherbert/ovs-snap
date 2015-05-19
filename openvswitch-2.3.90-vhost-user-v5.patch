@@ -16,6 +16,10 @@ code duplication.
 - Fixed indentation & line-wrap.
 - Simplified and corrected the processing of vhost ovs-vswitchd flags.
 
+v5:
+- Removed unnecessary strdup()
+- Fixed spacing
+
 Signed-off-by: Ciara Loftus <ciara.loftus@intel.com>
 ---
  INSTALL.DPDK.md         | 174 ++++++++++++++++++++++++++++++++++++++----------
@@ -289,7 +293,7 @@ index aab7df8..ddaa7f2 100644
      RTE_SDK=
    fi
 diff --git a/lib/netdev-dpdk.c b/lib/netdev-dpdk.c
-index 505ab75..0edae78 100644
+index 505ab75..b7b1398 100644
 --- a/lib/netdev-dpdk.c
 +++ b/lib/netdev-dpdk.c
 @@ -28,6 +28,7 @@
@@ -497,7 +501,7 @@ index 505ab75..0edae78 100644
 +        VLOG_INFO("User-provided %s in use: %s", flag, *new_val);
 +        changed = 1;
 +    } else {
-+        *new_val = strdup(default_val);
++        *new_val = default_val;
 +        VLOG_INFO("No %s provided - defaulting to %s", flag, default_val);
 +    }
 +
@@ -522,7 +526,7 @@ index 505ab75..0edae78 100644
 -
 -        /* Remove the cuse_dev_name configuration parameters from the argument
 +#ifdef VHOST_CUSE
-+    if(process_vhost_flags("--cuse_dev_name", strdup("vhost-net"),
++    if (process_vhost_flags("--cuse_dev_name", strdup("vhost-net"),
 +            PATH_MAX, argv, &cuse_dev_name)) {
 +#else
 +    if (process_vhost_flags("--vhost_sock_dir", strdup(ovs_rundir()),
@@ -611,3 +615,8 @@ index a1b33da..48651df 100644
             "  -h, --help                display this help message\n"
 -- 
 1.9.3
+
+_______________________________________________
+dev mailing list
+dev@openvswitch.org
+http://openvswitch.org/mailman/listinfo/dev

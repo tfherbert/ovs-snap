@@ -12,8 +12,8 @@
 %bcond_without vhost_user
 
 %define ver 2.3.90
-%define rel 2
-%define snapver 10120.git9899125a
+%define rel 1
+%define snapver 10130.git8aaa125d
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -43,7 +43,7 @@ Source101: libdpdk_core.so
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 # http://openvswitch.org/pipermail/dev/2015-May/055192.html
-Patch5: openvswitch-2.3.90-vhost-user-v4.patch
+Patch5: openvswitch-2.3.90-vhost-user-v5.patch
 # Support for adding DPDK ports via initscripts
 Patch6: openvswitch-2.3.90-dpdk-ports-1.patch
 
@@ -350,6 +350,10 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Tue May 19 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10130.git8aaa125d.1
+- New snapshot
+- vhost-user patch v5 which is likely to be upstreamed
+
 * Wed May 13 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10120.git9899125a.2
 - vhost-user patch v4, defaulting to OVS rundir for sockets
 
