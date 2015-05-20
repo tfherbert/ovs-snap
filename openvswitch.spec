@@ -5,7 +5,7 @@
 %define dpdk_ver 1.8.0
 
 %define ver 2.3.90
-%define rel 1
+%define rel 2
 %define snapver 10130.git8aaa125d
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -33,6 +33,8 @@ Source100: ovs-snapshot.sh
 # custom linker script for dpdk
 Source101: libdpdk_core.so
 
+# Use DPDK defaults: http://openvswitch.org/pipermail/dev/2015-May/055398.html
+Patch1: openvswitch-2.3.90-dpdk-default-nic.patch
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 # http://openvswitch.org/pipermail/dev/2015-May/055192.html
@@ -104,6 +106,7 @@ files needed to build an external application.
 %prep
 %setup -q -n %{name}-%{srcver}
 
+%patch1 -p1 -b .dpdk-default-nic
 %patch3 -p1 -b .dpdk-options
 %patch5 -p1 -b .vhost-user
 %patch6 -p1 -b .dpdk-ports
@@ -334,10 +337,13 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Wed May 20 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10130.git8aaa125d.2
+- Use DPDK NIC defaults (should improve performance)
+
 * Tue May 19 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10130.git8aaa125d.1
 - New snapshot
-- vhost-user patch v5 which is likely to be upstreamed
-- drop vhost-cuse support from spec
+- Update to vhost-user patch v5 which is likely to be upstreamed
+- Drop vhost-cuse support from spec
 
 * Wed May 13 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10120.git9899125a.2
 - vhost-user patch v4, defaulting to OVS rundir for sockets
