@@ -5,8 +5,8 @@
 %define dpdk_ver 1.8.0
 
 %define ver 2.3.90
-%define rel 2
-%define snapver 10130.git8aaa125d
+%define rel 1
+%define snapver 10140.git048963aa
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -33,12 +33,10 @@ Source100: ovs-snapshot.sh
 # custom linker script for dpdk
 Source101: libdpdk_core.so
 
-# Use DPDK defaults: http://openvswitch.org/pipermail/dev/2015-May/055398.html
-Patch1: openvswitch-2.3.90-dpdk-default-nic.patch
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 # http://openvswitch.org/pipermail/dev/2015-May/055192.html
-Patch5: openvswitch-2.3.90-vhost-user-v5.patch
+Patch5: openvswitch-2.3.90-vhost-user-v6-1.patch
 # Support for adding DPDK ports via initscripts
 Patch6: openvswitch-2.3.90-dpdk-ports-1.patch
 
@@ -106,7 +104,6 @@ files needed to build an external application.
 %prep
 %setup -q -n %{name}-%{srcver}
 
-%patch1 -p1 -b .dpdk-default-nic
 %patch3 -p1 -b .dpdk-options
 %patch5 -p1 -b .vhost-user
 %patch6 -p1 -b .dpdk-ports
@@ -337,6 +334,10 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Fri May 22 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10140.git048963aa.1
+- New snapshot
+- Update to vhost-user patch v6
+
 * Wed May 20 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10130.git8aaa125d.2
 - Use DPDK NIC defaults (should improve performance)
 
