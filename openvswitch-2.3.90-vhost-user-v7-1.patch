@@ -1,20 +1,8 @@
-diff -up openvswitch-2.3.90-10140.git048963aa/acinclude.m4.vhost-user openvswitch-2.3.90-10140.git048963aa/acinclude.m4
---- openvswitch-2.3.90-10140.git048963aa/acinclude.m4.vhost-user	2015-05-22 00:00:24.000000000 +0300
-+++ openvswitch-2.3.90-10140.git048963aa/acinclude.m4	2015-05-22 08:40:30.926380471 +0300
-@@ -220,6 +220,9 @@ AC_DEFUN([OVS_CHECK_DPDK], [
-     DPDK_vswitchd_LDFLAGS=-Wl,--whole-archive,$DPDK_LIB,--no-whole-archive
-     AC_SUBST([DPDK_vswitchd_LDFLAGS])
-     AC_DEFINE([DPDK_NETDEV], [1], [System uses the DPDK module.])
-+
-+    OVS_GREP_IFELSE([$RTE_SDK/include/rte_config.h], [define RTE_LIBRTE_VHOST_USER 1],
-+                    [], [AC_DEFINE([VHOST_CUSE], [1], [DPDK vhost-cuse support enabled, vhost-user disabled.])])
-   else
-     RTE_SDK=
-   fi
-diff -up openvswitch-2.3.90-10140.git048963aa/INSTALL.DPDK.md.vhost-user openvswitch-2.3.90-10140.git048963aa/INSTALL.DPDK.md
---- openvswitch-2.3.90-10140.git048963aa/INSTALL.DPDK.md.vhost-user	2015-05-22 00:00:24.000000000 +0300
-+++ openvswitch-2.3.90-10140.git048963aa/INSTALL.DPDK.md	2015-05-22 08:40:30.851380688 +0300
-@@ -16,7 +16,9 @@ OVS needs a system with 1GB hugepages su
+diff --git a/INSTALL.DPDK.md b/INSTALL.DPDK.md
+index 462ba0e..8d6fd6a 100644
+--- a/INSTALL.DPDK.md
++++ b/INSTALL.DPDK.md
+@@ -16,7 +16,9 @@ OVS needs a system with 1GB hugepages support.
  Building and Installing:
  ------------------------
  
@@ -25,7 +13,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/INSTALL.DPDK.md.vhost-user openvsw
  
  1. Configure build & install DPDK:
    1. Set `$DPDK_DIR`
-@@ -31,13 +33,10 @@ Required DPDK 2.0, `fuse`, `fuse-devel`
+@@ -31,13 +33,10 @@ Required DPDK 2.0, `fuse`, `fuse-devel` (`libfuse-dev` on Debian/Ubuntu)
  
       `CONFIG_RTE_BUILD_COMBINE_LIBS=y`
  
@@ -41,7 +29,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/INSTALL.DPDK.md.vhost-user openvsw
  
       Then run `make install` to build and install the library.
       For default install without IVSHMEM:
-@@ -319,40 +318,144 @@ the vswitchd.
+@@ -316,40 +315,144 @@ the vswitchd.
  DPDK vhost:
  -----------
  
@@ -207,7 +195,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/INSTALL.DPDK.md.vhost-user openvsw
     By default it is set to `/dev/vhost-net`. It is possible to reuse this
     standard device for DPDK vhost, which makes setup a little simpler but it
     is better practice to specify an alternative character device in order to
-@@ -418,16 +521,19 @@ DPDK vhost VM configuration:
+@@ -415,16 +518,19 @@ DPDK vhost VM configuration:
     QEMU must allocate the VM's memory on hugetlbfs. Vhost ports access a
     virtio-net device's virtual rings and packet buffers mapping the VM's
     physical memory on hugetlbfs. To enable vhost-ports to map the VM's
@@ -230,7 +218,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/INSTALL.DPDK.md.vhost-user openvsw
  The QEMU wrapper script automatically detects and calls QEMU with the
  necessary parameters. It performs the following actions:
  
-@@ -453,8 +559,8 @@ qemu-wrap.py -cpu host -boot c -hda <dis
+@@ -450,8 +556,8 @@ qemu-wrap.py -cpu host -boot c -hda <disk image> -m 4096 -smp 4
    netdev=net1,mac=00:00:00:00:00:01
  ```
  
@@ -241,7 +229,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/INSTALL.DPDK.md.vhost-user openvsw
  
  If you are using libvirt, you must enable libvirt to access the character
  device by adding it to controllers cgroup for libvirtd using the following
-@@ -528,7 +634,7 @@ Now you may launch your VM using virt-ma
+@@ -525,7 +631,7 @@ Now you may launch your VM using virt-manager, or like so:
  
      `virsh create my_vhost_vm.xml`
  
@@ -250,7 +238,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/INSTALL.DPDK.md.vhost-user openvsw
  ----------------------------------------------------------
  
  To use the qemu-wrapper script in conjuntion with libvirt, follow the
-@@ -556,7 +662,7 @@ steps in the previous section before pro
+@@ -553,7 +659,7 @@ steps in the previous section before proceeding with the following steps:
    the correct emulator location and set any additional options. If you are
    using a alternative character device name, please set "us_vhost_path" to the
    location of that device. The script will automatically detect and insert
@@ -259,22 +247,24 @@ diff -up openvswitch-2.3.90-10140.git048963aa/INSTALL.DPDK.md.vhost-user openvsw
  
    5. Use virt-manager to launch the VM
  
-diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev.c.vhost-user openvswitch-2.3.90-10140.git048963aa/lib/netdev.c
---- openvswitch-2.3.90-10140.git048963aa/lib/netdev.c.vhost-user	2015-05-22 00:00:24.000000000 +0300
-+++ openvswitch-2.3.90-10140.git048963aa/lib/netdev.c	2015-05-22 08:40:30.853380682 +0300
-@@ -111,7 +111,8 @@ netdev_is_pmd(const struct netdev *netde
- {
-     return (!strcmp(netdev->netdev_class->type, "dpdk") ||
-             !strcmp(netdev->netdev_class->type, "dpdkr") ||
--            !strcmp(netdev->netdev_class->type, "dpdkvhost"));
-+            !strcmp(netdev->netdev_class->type, "dpdkvhost") ||
-+            !strcmp(netdev->netdev_class->type, "dpdkvhostuser"));
- }
- 
- static void
-diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c
---- openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user	2015-05-22 00:00:24.000000000 +0300
-+++ openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c	2015-05-22 08:40:30.852380685 +0300
+diff --git a/acinclude.m4 b/acinclude.m4
+index d09a73f..20391ec 100644
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -220,6 +220,9 @@ AC_DEFUN([OVS_CHECK_DPDK], [
+     DPDK_vswitchd_LDFLAGS=-Wl,--whole-archive,$DPDK_LIB,--no-whole-archive
+     AC_SUBST([DPDK_vswitchd_LDFLAGS])
+     AC_DEFINE([DPDK_NETDEV], [1], [System uses the DPDK module.])
++
++    OVS_GREP_IFELSE([$RTE_SDK/include/rte_config.h], [define RTE_LIBRTE_VHOST_USER 1],
++                    [], [AC_DEFINE([VHOST_CUSE], [1], [DPDK vhost-cuse support enabled, vhost-user disabled.])])
+   else
+     RTE_SDK=
+   fi
+diff --git a/lib/netdev-dpdk.c b/lib/netdev-dpdk.c
+index 63243d8..62da812 100644
+--- a/lib/netdev-dpdk.c
++++ b/lib/netdev-dpdk.c
 @@ -28,6 +28,7 @@
  #include <unistd.h>
  #include <stdio.h>
@@ -283,7 +273,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
  #include "dp-packet.h"
  #include "dpif-netdev.h"
  #include "list.h"
-@@ -90,8 +91,8 @@ BUILD_ASSERT_DECL((MAX_NB_MBUF / ROUND_D
+@@ -90,8 +91,8 @@ BUILD_ASSERT_DECL((MAX_NB_MBUF / ROUND_DOWN_POW2(MAX_NB_MBUF/MIN_NB_MBUF))
  #define NIC_PORT_RX_Q_SIZE 2048  /* Size of Physical NIC RX Queue, Max (n+32<=4096)*/
  #define NIC_PORT_TX_Q_SIZE 2048  /* Size of Physical NIC TX Queue, Max (n+32<=4096)*/
  
@@ -304,7 +294,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
  };
  
  static int rte_eal_init_ret = ENODEV;
-@@ -204,6 +206,9 @@ struct netdev_dpdk {
+@@ -221,6 +223,9 @@ struct netdev_dpdk {
      /* virtio-net structure for vhost device */
      OVSRCU_TYPE(struct virtio_net *) virtio_dev;
  
@@ -313,10 +303,10 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
 +
      /* In dpdk_list. */
      struct ovs_list list_node OVS_GUARDED_BY(dpdk_mutex);
-     rte_spinlock_t txq_lock;
-@@ -530,6 +535,24 @@ netdev_dpdk_init(struct netdev *netdev_,
-     netdev_->n_txq = NR_QUEUE;
+ };
+@@ -560,6 +565,24 @@ netdev_dpdk_init(struct netdev *netdev_, unsigned int port_no,
      netdev_->n_rxq = NR_QUEUE;
+     netdev->real_n_txq = NR_QUEUE;
  
 +    /* Take the name of the vhost-user port and append it to the location where
 +     * the socket is to be created, then register the socket.
@@ -339,16 +329,16 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
      if (type == DPDK_DEV_ETH) {
          netdev_dpdk_alloc_txq(netdev, NR_QUEUE);
          err = dpdk_eth_dev_init(netdev);
-@@ -564,7 +587,7 @@ dpdk_dev_parse_name(const char dev_name[
+@@ -594,7 +617,7 @@ dpdk_dev_parse_name(const char dev_name[], const char prefix[],
  }
  
  static int
 -netdev_dpdk_vhost_construct(struct netdev *netdev_)
 +vhost_construct_helper(struct netdev *netdev_, int type)
  {
+     struct netdev_dpdk *netdev = netdev_dpdk_cast(netdev_);
      int err;
- 
-@@ -573,13 +596,25 @@ netdev_dpdk_vhost_construct(struct netde
+@@ -604,7 +627,7 @@ netdev_dpdk_vhost_construct(struct netdev *netdev_)
      }
  
      ovs_mutex_lock(&dpdk_mutex);
@@ -356,7 +346,8 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
 +    err = netdev_dpdk_init(netdev_, -1, type);
      ovs_mutex_unlock(&dpdk_mutex);
  
-     return err;
+     rte_spinlock_init(&netdev->vhost_tx_lock);
+@@ -613,6 +636,18 @@ netdev_dpdk_vhost_construct(struct netdev *netdev_)
  }
  
  static int
@@ -375,8 +366,8 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
  netdev_dpdk_construct(struct netdev *netdev)
  {
      unsigned int port_no;
-@@ -1025,7 +1060,7 @@ dpdk_do_tx_copy(struct netdev *netdev, i
-         ovs_mutex_unlock(&dev->mutex);
+@@ -1067,7 +1102,7 @@ dpdk_do_tx_copy(struct netdev *netdev, int qid, struct dp_packet **pkts,
+         rte_spinlock_unlock(&dev->stats_lock);
      }
  
 -    if (dev->type == DPDK_DEV_VHOST) {
@@ -384,7 +375,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
          __netdev_dpdk_vhost_send(netdev, (struct dp_packet **) mbufs, newcnt, true);
      } else {
          dpdk_queue_pkts(dev, qid, mbufs, newcnt);
-@@ -1544,15 +1579,17 @@ set_irq_status(struct virtio_net *dev)
+@@ -1599,15 +1634,17 @@ set_irq_status(struct virtio_net *dev)
   * A new virtio-net device is added to a vhost port.
   */
  static int
@@ -404,7 +395,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
              ovs_mutex_lock(&netdev->mutex);
              ovsrcu_set(&netdev->virtio_dev, dev);
              ovs_mutex_unlock(&netdev->mutex);
-@@ -1577,6 +1614,18 @@ new_device(struct virtio_net *dev)
+@@ -1632,6 +1669,18 @@ new_device(struct virtio_net *dev)
      return 0;
  }
  
@@ -423,7 +414,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
  /*
   * Remove a virtio-net device from the specific vhost port.  Use dev->remove
   * flag to stop any more packets from being sent or received to/from a VM and
-@@ -1631,8 +1680,14 @@ static const struct virtio_net_device_op
+@@ -1686,8 +1735,14 @@ static const struct virtio_net_device_ops virtio_net_device_ops =
      .destroy_device = destroy_device,
  };
  
@@ -439,7 +430,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
  {
       pthread_detach(pthread_self());
       /* Put the cuse thread into quiescent state. */
-@@ -1659,7 +1714,16 @@ dpdk_vhost_class_init(void)
+@@ -1714,7 +1769,16 @@ dpdk_vhost_class_init(void)
          return -1;
      }
  
@@ -457,7 +448,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
      return 0;
  }
  
-@@ -1871,6 +1935,32 @@ unlock_dpdk:
+@@ -1923,6 +1987,32 @@ unlock_dpdk:
      NULL,                       /* rxq_drain */               \
  }
  
@@ -490,7 +481,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
  int
  dpdk_init(int argc, char **argv)
  {
-@@ -1885,27 +1975,20 @@ dpdk_init(int argc, char **argv)
+@@ -1937,27 +2027,20 @@ dpdk_init(int argc, char **argv)
      argc--;
      argv++;
  
@@ -527,7 +518,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
      }
  
      /* Keep the program name argument as this is needed for call to
-@@ -1974,6 +2057,20 @@ static const struct netdev_class dpdk_vh
+@@ -2026,6 +2109,20 @@ static const struct netdev_class dpdk_vhost_class =
          NULL,
          netdev_dpdk_vhost_rxq_recv);
  
@@ -548,7 +539,7 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
  void
  netdev_dpdk_register(void)
  {
-@@ -1987,7 +2084,11 @@ netdev_dpdk_register(void)
+@@ -2039,7 +2136,11 @@ netdev_dpdk_register(void)
          dpdk_common_init();
          netdev_register_provider(&dpdk_class);
          netdev_register_provider(&dpdk_ring_class);
@@ -560,9 +551,24 @@ diff -up openvswitch-2.3.90-10140.git048963aa/lib/netdev-dpdk.c.vhost-user openv
          ovsthread_once_done(&once);
      }
  }
-diff -up openvswitch-2.3.90-10140.git048963aa/vswitchd/ovs-vswitchd.c.vhost-user openvswitch-2.3.90-10140.git048963aa/vswitchd/ovs-vswitchd.c
---- openvswitch-2.3.90-10140.git048963aa/vswitchd/ovs-vswitchd.c.vhost-user	2015-05-22 00:00:24.000000000 +0300
-+++ openvswitch-2.3.90-10140.git048963aa/vswitchd/ovs-vswitchd.c	2015-05-22 08:40:30.853380682 +0300
+diff --git a/lib/netdev.c b/lib/netdev.c
+index 03a7549..ee8e56d 100644
+--- a/lib/netdev.c
++++ b/lib/netdev.c
+@@ -111,7 +111,8 @@ netdev_is_pmd(const struct netdev *netdev)
+ {
+     return (!strcmp(netdev->netdev_class->type, "dpdk") ||
+             !strcmp(netdev->netdev_class->type, "dpdkr") ||
+-            !strcmp(netdev->netdev_class->type, "dpdkvhost"));
++            !strcmp(netdev->netdev_class->type, "dpdkvhost") ||
++            !strcmp(netdev->netdev_class->type, "dpdkvhostuser"));
+ }
+ 
+ static void
+diff --git a/vswitchd/ovs-vswitchd.c b/vswitchd/ovs-vswitchd.c
+index a1b33da..48651df 100644
+--- a/vswitchd/ovs-vswitchd.c
++++ b/vswitchd/ovs-vswitchd.c
 @@ -253,8 +253,13 @@ usage(void)
      vlog_usage();
      printf("\nDPDK options:\n"

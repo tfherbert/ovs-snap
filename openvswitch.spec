@@ -6,7 +6,7 @@
 
 %define ver 2.3.90
 %define rel 1
-%define snapver 10140.git048963aa
+%define snapver 10151.git8f19f0a7
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -36,7 +36,7 @@ Source101: libdpdk_core.so
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 # http://openvswitch.org/pipermail/dev/2015-May/055192.html
-Patch5: openvswitch-2.3.90-vhost-user-v6-1.patch
+Patch5: openvswitch-2.3.90-vhost-user-v7-1.patch
 # Support for adding DPDK ports via initscripts
 Patch6: openvswitch-2.3.90-dpdk-ports-1.patch
 
@@ -334,6 +334,10 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Mon May 25 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10151.git8f19f0a7.1
+- New snapshot
+- Update/rebase to vhost-user patch v7
+
 * Fri May 22 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10140.git048963aa.1
 - New snapshot
 - Update to vhost-user patch v6
