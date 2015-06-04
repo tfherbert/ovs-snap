@@ -6,7 +6,7 @@
 
 %define ver 2.3.90
 %define rel 1
-%define snapver 10151.git8f19f0a7
+%define snapver 10215.git3bcc10c0
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -334,6 +334,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Thu Jun 04 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10215.git3bcc10c0.1
+- New snapshot
+
 * Mon May 25 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10151.git8f19f0a7.1
 - New snapshot
 - Update/rebase to vhost-user patch v7
