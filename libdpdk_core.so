@@ -20,5 +20,5 @@ GROUP (
   librte_pmd_fm10k.so
   librte_pmd_i40e.so
   librte_pmd_null.so
-  librte_pmd_virtio_uio.so
+  librte_pmd_virtio.so
 )

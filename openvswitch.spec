@@ -4,9 +4,9 @@
 %bcond_without dpdk
 %define dpdk_ver 1.8.0
 
-%define ver 2.3.90
+%define ver 2.4.90
 %define rel 1
-%define snapver 10260.git7d1ced01
+%define snapver 10415.git0eb48fe1
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -98,6 +98,16 @@ Provides: openvswitch-static = %{version}-%{release}
 This provides static library, libopenswitch.a and the openvswitch header
 files needed to build an external application.
 
+%package ovn
+Summary: Open vSwitch - Open Virtual Network support
+License: ASL 2.0
+Requires: openvswitch
+
+%description ovn
+OVN, the Open Virtual Network, is a system to support virtual network
+abstraction.  OVN complements the existing capabilities of OVS to add
+native support for virtual network abstractions, such as virtual L2 and L3
+overlays and security groups.
 
 %prep
 %setup -q -n %{name}-%{srcver}
@@ -136,12 +146,11 @@ install -d -m 0755 $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch
 install -p -D -m 0644 \
         rhel/usr_share_openvswitch_scripts_systemd_sysconfig.template \
         $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/openvswitch
-install -p -D -m 0644 \
-        rhel/usr_lib_systemd_system_openvswitch.service \
-        $RPM_BUILD_ROOT%{_unitdir}/openvswitch.service
-install -p -D -m 0644 \
-        rhel/usr_lib_systemd_system_openvswitch-nonetwork.service \
-        $RPM_BUILD_ROOT%{_unitdir}/openvswitch-nonetwork.service
+for service in openvswitch openvswitch-nonetwork ovn-controller ovn-northd; do
+        install -p -D -m 0644 \
+                        rhel/usr_lib_systemd_system_${service}.service \
+                        $RPM_BUILD_ROOT%{_unitdir}/${service}.service
+done
 
 install -m 0755 rhel/etc_init.d_openvswitch \
         $RPM_BUILD_ROOT%{_datadir}/openvswitch/scripts/openvswitch.init
@@ -206,10 +215,34 @@ rm -rf $RPM_BUILD_ROOT
     fi
 %endif
 
+%preun ovn
+%if 0%{?systemd_preun:1}
+    %systemd_preun ovn-controller.service
+    %systemd_preun ovn-northd.service
+%else
+    if [ $1 -eq 0 ] ; then
+    # Package removal, not upgrade
+        /bin/systemctl --no-reload disable ovn-controller.service >/dev/null 2>&1 || :
+        /bin/systemctl stop ovn-controller.service >/dev/null 2>&1 || :
+        /bin/systemctl --no-reload disable ovn-northd.service >/dev/null 2>&1 || :
+        /bin/systemctl stop ovn-northd.service >/dev/null 2>&1 || :
+    fi
+%endif
 
 %post
 %if 0%{?systemd_post:1}
     %systemd_post %{name}.service
+%else
+    # Package install, not upgrade
+    if [ $1 -eq 1 ]; then
+        /bin/systemctl daemon-reload >dev/null || :
+    fi
+%endif
+
+%post ovn
+%if 0%{?systemd_post:1}
+    %systemd_post ovn-controller.service
+    %systemd_post ovn-northd.service
 %else
     # Package install, not upgrade
     if [ $1 -eq 1 ]; then
@@ -239,6 +272,18 @@ rm -rf $RPM_BUILD_ROOT
     fi
 %endif
 
+%postun ovn
+%if 0%{?systemd_postun_with_restart:1}
+    %systemd_postun_with_restart ovn-controller.service
+    %systemd_postun_with_restart ovn-northd.service
+%else
+    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+    if [ "$1" -ge "1" ] ; then
+    # Package upgrade, not uninstall
+        /bin/systemctl try-restart ovn-controller.service >/dev/null 2>&1 || :
+        /bin/systemctl try-restart ovn-northd.service >/dev/null 2>&1 || :
+    fi
+%endif
 
 %files -n python-openvswitch
 %{python_sitelib}/ovs
@@ -297,6 +342,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_sbindir}/ovsdb-server
 %{_mandir}/man1/ovs-benchmark.1*
 %{_mandir}/man1/ovs-pcap.1*
+%{_mandir}/man1/ovs-sim.1*
 %{_mandir}/man1/ovs-tcpundump.1*
 %{_mandir}/man1/ovsdb-client.1*
 %{_mandir}/man1/ovsdb-server.1*
@@ -330,7 +376,31 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_mandir}/man8/ovs-vlan-bug-workaround.8.gz
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
+%files ovn
+%{_bindir}/ovn-controller
+%{_bindir}/ovn-nbctl
+%{_bindir}/ovn-northd
+%{_datadir}/openvswitch/scripts/ovn-ctl
+%{_mandir}/man8/ovs-testcontroller.8*
+%{_mandir}/man5/ovn-nb.5*
+%{_mandir}/man5/ovn-sb.5*
+%{_mandir}/man7/ovn-architecture.7*
+%{_mandir}/man8/ovn-controller.8*
+%{_mandir}/man8/ovn-ctl.8*
+%{_mandir}/man8/ovn-nbctl.8*
+%config %{_datadir}/openvswitch/ovn-nb.ovsschema
+%config %{_datadir}/openvswitch/ovn-sb.ovsschema
+%{_unitdir}/ovn-controller.service
+%{_unitdir}/ovn-northd.service
+%ghost %attr(755,root,root) /var/lib/ovn-controller
+%ghost %attr(755,root,root) /var/lib/ovn-northd
+
 %changelog
+* Tue Jun 23 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-10415.git0eb48fe1.1
+- Update 2.4.90 based snapshot
+- New -ovn subpackage (copy-pasted from upstream spec)
+- Adjust linker script for librte_pmd_virtio_uio -> librte_pmd_virtio change
+
 * Mon Jun 15 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10260.git7d1ced01.1
 - New snapshot, vhost-user upstreamed now
 
