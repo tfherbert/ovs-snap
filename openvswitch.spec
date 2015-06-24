@@ -4,9 +4,9 @@
 %bcond_without dpdk
 %define dpdk_ver 1.8.0
 
-%define ver 2.3.90
+%define ver 2.4.0
 %define rel 1
-%define snapver 10260.git7d1ced01
+%define snapver 10279.gitcecc36ef
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -16,7 +16,7 @@
 
 Name: openvswitch
 Version: %{ver}
-Release: %{snapver}.%{rel}%{?dist}
+Release: %{?snapver:0.%{snapver}.}%{rel}%{?dist}
 Summary: Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -331,6 +331,10 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Wed Jun 24 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.0-0.10279.gitcecc36ef.1
+- Update to snapshot from 2.4 branch
+- Switch to a proper pre-release nvr scheme
+
 * Mon Jun 15 2015 Panu Matilainen <pmatilai@redhat.com> - 2.3.90-10260.git7d1ced01.1
 - New snapshot, vhost-user upstreamed now
 
