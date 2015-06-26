@@ -6,7 +6,7 @@
 
 %define ver 2.4.90
 %define rel 1
-%define snapver 10415.git0eb48fe1
+%define snapver 10461.gite3a4416a
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -396,6 +396,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Fri Jun 26 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-10461.gite3a4416a.1
+- New snapshot
+
 * Tue Jun 23 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-10415.git0eb48fe1.1
 - Update 2.4.90 based snapshot
 - New -ovn subpackage (copy-pasted from upstream spec)
