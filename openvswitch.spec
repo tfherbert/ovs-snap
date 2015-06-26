@@ -6,7 +6,7 @@
 
 %define ver 2.4.0
 %define rel 1
-%define snapver 10279.gitcecc36ef
+%define snapver 10292.git0020b5b5
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -331,6 +331,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Fri Jun 26 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.0-0.10292.git0020b5b5.1
+- New snapshot from 2.4 branch
+
 * Wed Jun 24 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.0-0.10279.gitcecc36ef.1
 - Update to snapshot from 2.4 branch
 - Switch to a proper pre-release nvr scheme
