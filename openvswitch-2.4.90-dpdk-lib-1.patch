@@ -7,10 +7,10 @@ diff -up openvswitch-2.3.90-10031.gitf097013a/acinclude.m4.dpdk-lib openvswitch-
      DPDK_INCLUDE=$RTE_SDK/include
 -    DPDK_LIB_DIR=$RTE_SDK/lib
 -    DPDK_LIB="-lintel_dpdk"
--    DPDK_EXTRA_LIB="-lfuse"
+-    DPDK_EXTRA_LIB=""
 +    DPDK_LIB_DIR=.
 +    DPDK_LIB="-ldpdk_core"
 +    DPDK_EXTRA_LIB=""
  
-     ovs_save_CFLAGS="$CFLAGS"
-     ovs_save_LDFLAGS="$LDFLAGS"
+     AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([#include <$RTE_SDK/include/rte_config.h>

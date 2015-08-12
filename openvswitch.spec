@@ -6,7 +6,7 @@
 
 %define ver 2.4.90
 %define rel 1
-%define snapver 10461.gite3a4416a
+%define snapver 10701.gitb883db24
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -39,7 +39,7 @@ Patch3: openvswitch-2.3.90-dpdk-options.patch
 Patch6: openvswitch-2.3.90-dpdk-ports-1.patch
 
 # Use our own linker script
-Patch20: openvswitch-2.3.90-dpdk-lib-1.patch
+Patch20: openvswitch-2.4.90-dpdk-lib-1.patch
 
 ExcludeArch: ppc
 
@@ -342,7 +342,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_sbindir}/ovsdb-server
 %{_mandir}/man1/ovs-benchmark.1*
 %{_mandir}/man1/ovs-pcap.1*
-%{_mandir}/man1/ovs-sim.1*
 %{_mandir}/man1/ovs-tcpundump.1*
 %{_mandir}/man1/ovsdb-client.1*
 %{_mandir}/man1/ovsdb-server.1*
@@ -378,7 +377,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %files ovn
 %{_bindir}/ovn-controller
+%{_bindir}/ovn-controller-vtep
 %{_bindir}/ovn-nbctl
+%{_bindir}/ovn-sbctl
 %{_bindir}/ovn-northd
 %{_datadir}/openvswitch/scripts/ovn-ctl
 %{_mandir}/man8/ovs-testcontroller.8*
@@ -386,8 +387,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man5/ovn-sb.5*
 %{_mandir}/man7/ovn-architecture.7*
 %{_mandir}/man8/ovn-controller.8*
+%{_mandir}/man8/ovn-controller-vtep.8*
 %{_mandir}/man8/ovn-ctl.8*
 %{_mandir}/man8/ovn-nbctl.8*
+%{_mandir}/man8/ovn-sbctl.8*
 %config %{_datadir}/openvswitch/ovn-nb.ovsschema
 %config %{_datadir}/openvswitch/ovn-sb.ovsschema
 %{_unitdir}/ovn-controller.service
@@ -396,6 +399,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Wed Aug 12 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-10701.gitb883db24.1
+- New snapshot
+
 * Fri Jun 26 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-10461.gite3a4416a.1
 - New snapshot
 
