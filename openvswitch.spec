@@ -6,7 +6,7 @@
 
 %define ver 2.4.0
 %define rel 1
-%define snapver 10292.git0020b5b5
+%define snapver 10346.git97bab959
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -39,7 +39,7 @@ Patch3: openvswitch-2.3.90-dpdk-options.patch
 Patch6: openvswitch-2.3.90-dpdk-ports-1.patch
 
 # Use our own linker script
-Patch20: openvswitch-2.3.90-dpdk-lib-1.patch
+Patch20: openvswitch-2.4.0-dpdk-lib-1.patch
 
 ExcludeArch: ppc
 
@@ -331,6 +331,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Wed Aug 12 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.0-0.10346.git97bab959.1
+- New snapshot from 2.4 branch
+
 * Fri Jun 26 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.0-0.10292.git0020b5b5.1
 - New snapshot from 2.4 branch
 
