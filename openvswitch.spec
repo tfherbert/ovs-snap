@@ -6,7 +6,7 @@
 
 %define ver 2.4.0
 %define rel 1
-%define snapver 10346.git97bab959
+#define snapver 10346.git97bab959
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -331,6 +331,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Mon Aug 24 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.0-1
+- Update to openvswitch 2.4.0 final
+
 * Wed Aug 12 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.0-0.10346.git97bab959.1
 - New snapshot from 2.4 branch
 
