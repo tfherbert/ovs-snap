@@ -1,0 +1,12 @@
+#!/bin/bash
+
+snapgit=`git log --pretty=oneline -n1|cut -c1-8`
+snapser=`git log --pretty=oneline | wc -l`
+
+basever=`grep AC_INIT configure.ac | cut -d' ' -f2 | cut -d, -f1`
+
+prefix=openvswitch-${basever}-${snapser}.git${snapgit}
+archive=${prefix}.tar.gz
+
+echo "Creating ${archive}"
+git archive --prefix=${prefix}/ HEAD  | gzip -9 > ${archive}
