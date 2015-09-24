@@ -1,0 +1,139 @@
+commit f2f44f5da083c3a0c31f9080289af1941315b1ad
+Author: Daniele Di Proietto <diproiettod@vmware.com>
+Date:   Tue Jun 16 19:16:24 2015 +0100
+
+    dpif-netdev: Check for PKT_RX_RSS_HASH flag.
+    
+    DPDK mbufs contain a valid RSS hash only if PKT_RX_RSS_HASH is
+    set in 'ol_flags'.  Otherwise the hash is garbage and doesn't
+    relate to the packet.
+    
+    This fixes an issue with vhost, which, being a virtual NIC, doesn't
+    compute the hash.
+    
+    Reported-by: Dongjun <dongj@dtdream.com>
+    Suggested-by: Flavio Leitner <fbl@sysclose.org>
+    Acked-by: Kevin Traynor <kevin.traynor@intel.com>
+    Acked-by: Pravin B Shelar <pshelar@nicira.com>
+    Signed-off-by: Daniele Di Proietto <diproiettod@vmware.com>
+
+diff --git a/lib/dp-packet.h b/lib/dp-packet.h
+index e4c2593..5044ce0 100644
+--- a/lib/dp-packet.h
++++ b/lib/dp-packet.h
+@@ -48,6 +48,7 @@ struct dp_packet {
+     uint16_t data_ofs;          /* First byte actually in use. */
+     uint32_t size_;             /* Number of bytes in use. */
+     uint32_t rss_hash;          /* Packet hash. */
++    bool rss_hash_valid;        /* Is the 'rss_hash' valid? */
+ #endif
+     enum dp_packet_source source;  /* Source of memory allocated as 'base'. */
+     uint8_t l2_pad_size;           /* Detected l2 padding size.
+@@ -514,6 +515,8 @@ dp_packet_reset_packet(struct dp_packet *b, int off)
+     b->l2_5_ofs = b->l3_ofs = b->l4_ofs = UINT16_MAX;
+ }
+ 
++/* Returns the RSS hash of the packet 'p'.  Note that the returned value is
++ * correct only if 'dp_packet_rss_valid(p)' returns true */
+ static inline uint32_t
+ dp_packet_get_rss_hash(struct dp_packet *p)
+ {
+@@ -529,8 +532,30 @@ dp_packet_set_rss_hash(struct dp_packet *p, uint32_t hash)
+ {
+ #ifdef DPDK_NETDEV
+     p->mbuf.hash.rss = hash;
++    p->mbuf.ol_flags |= PKT_RX_RSS_HASH;
+ #else
+     p->rss_hash = hash;
++    p->rss_hash_valid = true;
++#endif
++}
++
++static inline bool
++dp_packet_rss_valid(struct dp_packet *p)
++{
++#ifdef DPDK_NETDEV
++    return p->mbuf.ol_flags & PKT_RX_RSS_HASH;
++#else
++    return p->rss_hash_valid;
++#endif
++}
++
++static inline void
++dp_packet_rss_invalidate(struct dp_packet *p)
++{
++#ifdef DPDK_NETDEV
++    p->mbuf.ol_flags &= ~PKT_RX_RSS_HASH;
++#else
++    p->rss_hash_valid = false;
+ #endif
+ }
+ 
+diff --git a/lib/dpif-netdev.c b/lib/dpif-netdev.c
+index db76290..446f386 100644
+--- a/lib/dpif-netdev.c
++++ b/lib/dpif-netdev.c
+@@ -3100,8 +3100,9 @@ dpif_netdev_packet_get_rss_hash(struct dp_packet *packet,
+ {
+     uint32_t hash, recirc_depth;
+ 
+-    hash = dp_packet_get_rss_hash(packet);
+-    if (OVS_UNLIKELY(!hash)) {
++    if (OVS_LIKELY(dp_packet_rss_valid(packet))) {
++        hash = dp_packet_get_rss_hash(packet);
++    } else {
+         hash = miniflow_hash_5tuple(mf, 0);
+         dp_packet_set_rss_hash(packet, hash);
+     }
+diff --git a/lib/netdev-bsd.c b/lib/netdev-bsd.c
+index f755475..60e5615 100644
+--- a/lib/netdev-bsd.c
++++ b/lib/netdev-bsd.c
+@@ -643,7 +643,7 @@ netdev_bsd_rxq_recv(struct netdev_rxq *rxq_, struct dp_packet **packets,
+         dp_packet_delete(packet);
+     } else {
+         dp_packet_pad(packet);
+-        dp_packet_set_rss_hash(packet, 0);
++        dp_packet_rss_invalidate(packet);
+         packets[0] = packet;
+         *c = 1;
+     }
+diff --git a/lib/netdev-dpdk.c b/lib/netdev-dpdk.c
+index 5bad7e0..e4e3d2c 100644
+--- a/lib/netdev-dpdk.c
++++ b/lib/netdev-dpdk.c
+@@ -2001,7 +2001,7 @@ netdev_dpdk_ring_send(struct netdev *netdev_, int qid,
+      * the consumer of the ring and return into the datapath without recalculating
+      * the RSS hash. */
+     for (i = 0; i < cnt; i++) {
+-        dp_packet_set_rss_hash(pkts[i], 0);
++        dp_packet_rss_invalidate(pkts[i]);
+     }
+ 
+     netdev_dpdk_send__(netdev, qid, pkts, cnt, may_steal);
+diff --git a/lib/netdev-dummy.c b/lib/netdev-dummy.c
+index 9946d5a..76815c2 100644
+--- a/lib/netdev-dummy.c
++++ b/lib/netdev-dummy.c
+@@ -855,7 +855,7 @@ netdev_dummy_rxq_recv(struct netdev_rxq *rxq_, struct dp_packet **arr,
+     ovs_mutex_unlock(&netdev->mutex);
+ 
+     dp_packet_pad(packet);
+-    dp_packet_set_rss_hash(packet, 0);
++    dp_packet_rss_invalidate(packet);
+ 
+     arr[0] = packet;
+     *c = 1;
+diff --git a/lib/netdev-linux.c b/lib/netdev-linux.c
+index 2b54c6a..584e804 100644
+--- a/lib/netdev-linux.c
++++ b/lib/netdev-linux.c
+@@ -1076,7 +1076,7 @@ netdev_linux_rxq_recv(struct netdev_rxq *rxq_, struct dp_packet **packets,
+         dp_packet_delete(buffer);
+     } else {
+         dp_packet_pad(buffer);
+-        dp_packet_set_rss_hash(buffer, 0);
++        dp_packet_rss_invalidate(buffer);
+         packets[0] = buffer;
+         *c = 1;
+     }

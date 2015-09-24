@@ -33,10 +33,15 @@ Source100: ovs-snapshot.sh
 # custom linker script for dpdk
 Source101: libdpdk.so
 
+# Support for DPDK 2.1
+Patch1: openvswitch-2.4.0-dpdk-2.1.patch
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 # Support for adding DPDK ports via initscripts
 Patch6: openvswitch-2.3.90-dpdk-ports-1.patch
+
+# Fix vhost NIC not computing hash
+Patch10: openvswitch-2.4.0-pkthash.patch
 
 # Use our own linker script
 Patch20: openvswitch-2.4.0-dpdk-lib-1.patch
@@ -102,8 +107,10 @@ files needed to build an external application.
 %prep
 %setup -q -n %{name}-%{srcver}
 
+%patch1 -p1 -b .dpdk-2.1
 %patch3 -p1 -b .dpdk-options
 %patch6 -p1 -b .dpdk-ports
+%patch10 -p1 -b .dpdk-pkthash
 
 %patch20 -p1 -b .dpdk-lib
 
@@ -333,6 +340,8 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Thu Sep 24 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.0-2
 - Rename internal linker script to libdpdk.so to match upstream dpdk naming
+- Backport DPDK 2.1 support
+- Backport fix for vhost NIC not computing hash
 
 * Mon Aug 24 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.0-1
 - Update to openvswitch 2.4.0 final
