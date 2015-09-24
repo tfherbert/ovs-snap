@@ -5,7 +5,7 @@
 %define dpdk_ver 1.8.0
 
 %define ver 2.4.0
-%define rel 1
+%define rel 2
 #define snapver 10346.git97bab959
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -31,7 +31,7 @@ Source0: %{name}-%{srcver}.tar.gz
 # snapshot creation script, not used for build itself
 Source100: ovs-snapshot.sh
 # custom linker script for dpdk
-Source101: libdpdk_core.so
+Source101: libdpdk.so
 
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
@@ -331,6 +331,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Thu Sep 24 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.0-2
+- Rename internal linker script to libdpdk.so to match upstream dpdk naming
+
 * Mon Aug 24 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.0-1
 - Update to openvswitch 2.4.0 final
 

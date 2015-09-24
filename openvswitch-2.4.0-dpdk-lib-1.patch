@@ -9,7 +9,7 @@ diff -up openvswitch-2.3.90-10031.gitf097013a/acinclude.m4.dpdk-lib openvswitch-
 -    DPDK_LIB="-lintel_dpdk"
 -    DPDK_EXTRA_LIB=""
 +    DPDK_LIB_DIR=.
-+    DPDK_LIB="-ldpdk_core"
++    DPDK_LIB="-ldpdk"
 +    DPDK_EXTRA_LIB=""
  
      AC_COMPILE_IFELSE(
