@@ -6,7 +6,7 @@
 
 %define ver 2.4.90
 %define rel 1
-%define snapver 10701.gitb883db24
+%define snapver 10916.gita2cf7524
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -31,7 +31,7 @@ Source0: %{name}-%{srcver}.tar.gz
 # snapshot creation script, not used for build itself
 Source100: ovs-snapshot.sh
 # custom linker script for dpdk
-Source101: libdpdk_core.so
+Source101: libdpdk.so
 
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
@@ -390,6 +390,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man8/ovn-controller-vtep.8*
 %{_mandir}/man8/ovn-ctl.8*
 %{_mandir}/man8/ovn-nbctl.8*
+%{_mandir}/man8/ovn-northd.8*
 %{_mandir}/man8/ovn-sbctl.8*
 %config %{_datadir}/openvswitch/ovn-nb.ovsschema
 %config %{_datadir}/openvswitch/ovn-sb.ovsschema
@@ -399,6 +400,10 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Mon Sep 28 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-10916.gita2cf7524.1
+- New snapshot
+- Rename internal linker script to libdpdk.so to match upstream dpdk naming
+
 * Wed Aug 12 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-10701.gitb883db24.1
 - New snapshot
 
