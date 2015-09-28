@@ -1,7 +1,6 @@
 GROUP (
   librte_eal.so
   librte_mempool.so
-  librte_malloc.so
   librte_hash.so
   librte_ring.so
   librte_mbuf.so
