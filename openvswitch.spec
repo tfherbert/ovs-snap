@@ -6,7 +6,7 @@
 
 %define ver 2.4.90
 %define rel 1
-%define snapver 10916.gita2cf7524
+%define snapver 11065.gite2229be9
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -400,6 +400,10 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Thu Oct 22 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11065.gite2229be9.1
+- New snapshot
+- Update (and sort) drivers list to match current upstream
+
 * Mon Sep 28 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-10916.gita2cf7524.1
 - New snapshot
 - Rename internal linker script to libdpdk.so to match upstream dpdk naming

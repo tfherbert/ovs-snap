@@ -9,15 +9,18 @@ GROUP (
   librte_vhost.so
   libethdev.so
 
-  librte_pmd_pcap.so
-  librte_pmd_bond.so
   librte_pmd_af_packet.so
-  librte_pmd_ixgbe.so
-  librte_pmd_enic.so
+  librte_pmd_bnx2x.so
+  librte_pmd_bond.so
+  librte_pmd_cxgbe.so
   librte_pmd_e1000.so
-  librte_pmd_ring.so
+  librte_pmd_enic.so
   librte_pmd_fm10k.so
   librte_pmd_i40e.so
+  librte_pmd_ixgbe.so
   librte_pmd_null.so
+  librte_pmd_pcap.so
+  librte_pmd_ring.so
   librte_pmd_virtio.so
+  librte_pmd_vmxnet3_uio.so
 )
