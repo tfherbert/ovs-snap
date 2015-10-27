@@ -6,7 +6,7 @@
 
 %define ver 2.4.90
 %define rel 1
-%define snapver 11065.gite2229be9
+%define snapver 11080.git2a33a3c2
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -37,6 +37,8 @@ Source101: libdpdk.so
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 # Support for adding DPDK ports via initscripts
 Patch6: openvswitch-2.3.90-dpdk-ports-1.patch
+
+Patch10: openvswitch-multiqueue-v2.patch
 
 # Use our own linker script
 Patch20: openvswitch-2.4.90-dpdk-lib-1.patch
@@ -114,6 +116,8 @@ overlays and security groups.
 
 %patch3 -p1 -b .dpdk-options
 %patch6 -p1 -b .dpdk-ports
+
+%patch10 -p1 -b .multiqueue
 
 %patch20 -p1 -b .dpdk-lib
 
@@ -400,6 +404,10 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Tue Oct 27 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11080.git2a33a3c2.1
+- New snapshot
+- Add vhost-user multiqueue support (rfc patch v2)
+
 * Thu Oct 22 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11065.gite2229be9.1
 - New snapshot
 - Update (and sort) drivers list to match current upstream
