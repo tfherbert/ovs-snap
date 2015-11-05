@@ -5,7 +5,7 @@
 %define dpdk_ver 1.8.0
 
 %define ver 2.4.90
-%define rel 1
+%define rel 2
 %define snapver 11104.git994fcc5a
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -404,6 +404,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Thu Nov 05 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11104.git994fcc5a.2
+- Rebuild against dpdk 2.2.0-rc1
+
 * Thu Nov 05 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11104.git994fcc5a.1
 - New snapshot
 
