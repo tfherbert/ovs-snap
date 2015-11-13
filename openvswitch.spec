@@ -5,7 +5,7 @@
 %define dpdk_ver 1.8.0
 
 %define ver 2.4.90
-%define rel 2
+%define rel 3
 %define snapver 11130.git3e2493e1
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -30,6 +30,8 @@ Source0: %{name}-%{srcver}.tar.gz
 
 # snapshot creation script, not used for build itself
 Source100: ovs-snapshot.sh
+# custom linker script for dpdk
+Source101: libdpdk.so
 
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
@@ -37,6 +39,9 @@ Patch3: openvswitch-2.3.90-dpdk-options.patch
 Patch6: openvswitch-2.3.90-dpdk-ports-1.patch
 
 Patch10: openvswitch-multiqueue-v2.patch
+
+# Use our own linker script
+Patch20: openvswitch-2.4.90-dpdk-lib-1.patch
 
 ExcludeArch: ppc
 
@@ -114,13 +119,17 @@ overlays and security groups.
 
 %patch10 -p1 -b .multiqueue
 
+%patch20 -p1 -b .dpdk-lib
+
+# libdpdk is crazy as it brings in tonne of libs we dont need,
+# use a custom linker script tailored to our needs
+cp %{SOURCE101} .
+
 %build
 %if %{with dpdk}
 unset RTE_SDK
 . /etc/profile.d/dpdk-sdk-%{_arch}.sh
 %endif
-
-LDFLAGS=-Wl,--as-needed
 
 autoreconf -i
 %configure \
@@ -395,6 +404,10 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Fri Nov 13 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11130.git3e2493e1.3
+- Except that on RHEL-7 and older Fedoras -Wl,--as-needed causes build
+  failures :( Back to local linker script, without all the pmds.
+
 * Fri Nov 13 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11130.git3e2493e1.2
 - Erm, no patches are needed for linkage sanity, just use -Wl,--as-needed
 
