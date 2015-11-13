@@ -5,7 +5,7 @@
 %define dpdk_ver 1.8.0
 
 %define ver 2.4.90
-%define rel 1
+%define rel 2
 %define snapver 11130.git3e2493e1
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -37,9 +37,6 @@ Patch3: openvswitch-2.3.90-dpdk-options.patch
 Patch6: openvswitch-2.3.90-dpdk-ports-1.patch
 
 Patch10: openvswitch-multiqueue-v2.patch
-
-# Drop now unnecessary --whole-archive
-Patch20: openvswitch-2.4.90-dpdk-linking.patch
 
 ExcludeArch: ppc
 
@@ -117,13 +114,13 @@ overlays and security groups.
 
 %patch10 -p1 -b .multiqueue
 
-%patch20 -p1 -b .dpdk-linking
-
 %build
 %if %{with dpdk}
 unset RTE_SDK
 . /etc/profile.d/dpdk-sdk-%{_arch}.sh
 %endif
+
+LDFLAGS=-Wl,--as-needed
 
 autoreconf -i
 %configure \
@@ -398,6 +395,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Fri Nov 13 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11130.git3e2493e1.2
+- Erm, no patches are needed for linkage sanity, just use -Wl,--as-needed
+
 * Fri Nov 13 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11130.git3e2493e1.1
 - New snapshot
 - Drop no longer needed build hacks now that DPDK can automatically load drivers
