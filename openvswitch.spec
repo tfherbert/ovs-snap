@@ -30,8 +30,6 @@ Source0: %{name}-%{srcver}.tar.gz
 
 # snapshot creation script, not used for build itself
 Source100: ovs-snapshot.sh
-# custom linker script for dpdk
-Source101: libdpdk.so
 
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
@@ -40,8 +38,8 @@ Patch6: openvswitch-2.3.90-dpdk-ports-1.patch
 
 Patch10: openvswitch-multiqueue-v2.patch
 
-# Use our own linker script
-Patch20: openvswitch-2.4.90-dpdk-lib-1.patch
+# Drop now unnecessary --whole-archive
+Patch20: openvswitch-2.4.90-dpdk-linking.patch
 
 ExcludeArch: ppc
 
@@ -119,11 +117,7 @@ overlays and security groups.
 
 %patch10 -p1 -b .multiqueue
 
-%patch20 -p1 -b .dpdk-lib
-
-# libintel_dpdk is crazy as it brings in tonne of libs we dont need,
-# use a custom linker script tailored to our needs
-cp %{SOURCE101} .
+%patch20 -p1 -b .dpdk-linking
 
 %build
 %if %{with dpdk}
@@ -406,6 +400,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Fri Nov 13 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11130.git3e2493e1.1
 - New snapshot
+- Drop no longer needed build hacks now that DPDK can automatically load drivers
 
 * Thu Nov 05 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11104.git994fcc5a.2
 - Rebuild against dpdk 2.2.0-rc1
