@@ -5,8 +5,8 @@
 %define dpdk_ver 1.8.0
 
 %define ver 2.4.90
-%define rel 3
-%define snapver 11130.git3e2493e1
+%define rel 1
+%define snapver 11141.git89108874
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -385,6 +385,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/ovn-nbctl
 %{_bindir}/ovn-sbctl
 %{_bindir}/ovn-northd
+%{_bindir}/ovn-docker-overlay-driver
+%{_bindir}/ovn-docker-underlay-driver
 %{_datadir}/openvswitch/scripts/ovn-ctl
 %{_mandir}/man8/ovs-testcontroller.8*
 %{_mandir}/man5/ovn-nb.5*
@@ -404,6 +406,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Fri Nov 20 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11141.git89108874.1
+- New snapshot
+
 * Fri Nov 13 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11130.git3e2493e1.3
 - Except that on RHEL-7 and older Fedoras -Wl,--as-needed causes build
   failures :( Back to local linker script, without all the pmds.
