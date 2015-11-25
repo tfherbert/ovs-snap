@@ -195,6 +195,18 @@ install -p -D -m 0644 include/openflow/*.h \
 touch $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch/conf.db
 touch $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch/system-id.conf
 
+# remove non-packaged files from the buildroot
+rm -f %{buildroot}%{_bindir}/ovs-benchmark
+rm -f %{buildroot}%{_bindir}/ovs-parse-backtrace
+rm -f %{buildroot}%{_bindir}/ovs-pcap
+rm -f %{buildroot}%{_bindir}/ovs-tcpundump
+rm -f %{buildroot}%{_sbindir}/ovs-vlan-bug-workaround
+rm -f %{buildroot}%{_mandir}/man1/ovs-benchmark.1
+rm -f %{buildroot}%{_mandir}/man1/ovs-pcap.1
+rm -f %{buildroot}%{_mandir}/man1/ovs-tcpundump.1
+rm -f %{buildroot}%{_mandir}/man8/ovs-vlan-bug-workaround.8
+rm -f %{buildroot}%{_datadir}/openvswitch/scripts/ovs-save
+
 %check
 %if %{with check}
     if make check TESTSUITEFLAGS='%{_smp_mflags}' ||
@@ -344,9 +356,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_sbindir}/ovs-bugtool
 %{_sbindir}/ovs-vswitchd
 %{_sbindir}/ovsdb-server
-%{_mandir}/man1/ovs-benchmark.1*
-%{_mandir}/man1/ovs-pcap.1*
-%{_mandir}/man1/ovs-tcpundump.1*
 %{_mandir}/man1/ovsdb-client.1*
 %{_mandir}/man1/ovsdb-server.1*
 %{_mandir}/man1/ovsdb-tool.1*
@@ -368,16 +377,6 @@ rm -rf $RPM_BUILD_ROOT
 %doc FAQ.md NEWS INSTALL.DPDK.md rhel/README.RHEL
 /var/lib/openvswitch
 /var/log/openvswitch
-%exclude %{_bindir}/ovs-benchmark
-%exclude %{_bindir}/ovs-parse-backtrace
-%exclude %{_bindir}/ovs-pcap
-%exclude %{_bindir}/ovs-tcpundump
-%exclude %{_sbindir}/ovs-vlan-bug-workaround
-%exclude %{_mandir}/man1/ovs-benchmark.1.gz
-%exclude %{_mandir}/man1/ovs-pcap.1.gz
-%exclude %{_mandir}/man1/ovs-tcpundump.1.gz
-%exclude %{_mandir}/man8/ovs-vlan-bug-workaround.8.gz
-%exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %files ovn
 %{_bindir}/ovn-controller
@@ -408,6 +407,8 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Wed Nov 25 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11162.gitefee3309.1
 - New snapshot
+- Remove unpackaged files from buildroot instead of %exclude'ing,
+  the latter leaves artifacts into -debuginfo packages (#1281913)
 
 * Fri Nov 20 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11141.git89108874.1
 - New snapshot
