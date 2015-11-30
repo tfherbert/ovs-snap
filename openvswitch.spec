@@ -6,7 +6,7 @@
 
 %define ver 2.4.90
 %define rel 1
-%define snapver 11201.gitff882f96
+%define snapver 11222.gite696de79
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -405,6 +405,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Mon Nov 30 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11222.gite696de79.1
+- New snapshot
+
 * Thu Nov 26 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11201.gitff882f96.1
 - New snapshot
 
