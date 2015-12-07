@@ -57,18 +57,6 @@ index 7bf110c..35542f8 100644
  DPDK vhost-cuse:
  ----------------
  
-diff --git a/NEWS b/NEWS
-index 9b9dff2..a9a8e88 100644
---- a/NEWS
-+++ b/NEWS
-@@ -27,6 +27,7 @@ Post-v2.4.0
-    - Add support for connection tracking through the new "ct" action
-      and "ct_state"/"ct_zone"/"ct_mark"/"ct_label" match fields.  Only
-      available on Linux kernels with the connection tracking module loaded.
-+   - Added multiqueue support to vhost-user
- 
- 
- v2.4.0 - 20 Aug 2015
 diff --git a/lib/netdev-dpdk.c b/lib/netdev-dpdk.c
 index 93b0589..278aeb5 100644
 --- a/lib/netdev-dpdk.c

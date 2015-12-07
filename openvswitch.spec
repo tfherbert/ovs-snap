@@ -2,11 +2,11 @@
 
 # option to build without dpdk
 %bcond_without dpdk
-%define dpdk_ver 1.8.0
+%define dpdk_ver 2.2.0
 
-%define ver 2.4.90
+%define ver 2.5.0
 %define rel 1
-%define snapver 11222.gite696de79
+%define snapver 11284.git3e8cc1b4
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -16,7 +16,7 @@
 
 Name: openvswitch
 Version: %{ver}
-Release: %{snapver}.%{rel}%{?dist}
+Release: %{?snapver:0.%{snapver}.}%{rel}%{?dist}
 Summary: Open vSwitch daemon/database/utilities
 
 # Nearly all of openvswitch is ASL 2.0.  The bugtool is LGPLv2+, and the
@@ -405,6 +405,10 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Mon Dec 07 2015 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-0.11284.git3e8cc1b4.1
+- New snapshot, switch to 2.5 branch
+- Buildrequire dpdk >= 2.2 for multiqueue
+
 * Mon Nov 30 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.90-11222.gite696de79.1
 - New snapshot
 
