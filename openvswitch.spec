@@ -6,7 +6,7 @@
 
 %define ver 2.5.0
 %define rel 1
-%define snapver 11284.git3e8cc1b4
+%define snapver 11304.git176752aa
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -405,6 +405,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Fri Dec 11 2015 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-0.11304.git176752aa.1
+- New snapshot
+
 * Mon Dec 07 2015 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-0.11284.git3e8cc1b4.1
 - New snapshot, switch to 2.5 branch
 - Buildrequire dpdk >= 2.2 for multiqueue
