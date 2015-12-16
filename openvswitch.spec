@@ -6,7 +6,7 @@
 
 %define ver 2.5.0
 %define rel 1
-%define snapver 11312.git4bcb548d
+%define snapver 11316.gitfe10b446
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -405,6 +405,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Wed Dec 16 2015 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-0.11316.gitfe10b446.1
+- New snapshot
+
 * Mon Dec 14 2015 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-0.11312.git4bcb548d.1
 - New snapshot
 
