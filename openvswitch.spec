@@ -2,10 +2,10 @@
 
 # option to build without dpdk
 %bcond_without dpdk
-%define dpdk_ver 1.8.0
+%define dpdk_ver 2.2.0
 
 %define ver 2.4.0
-%define rel 2
+%define rel 3
 #define snapver 10346.git97bab959
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -338,6 +338,9 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{_datadir}/openvswitch/scripts/ovs-save
 
 %changelog
+* Wed Dec 16 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.0-3
+- Adjust linker script for DPDK 2.2 changes
+
 * Thu Sep 24 2015 Panu Matilainen <pmatilai@redhat.com> - 2.4.0-2
 - Rename internal linker script to libdpdk.so to match upstream dpdk naming
 - Backport DPDK 2.1 support
