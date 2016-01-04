@@ -6,7 +6,7 @@
 
 %define ver 2.5.0
 %define rel 1
-%define snapver 11316.gitfe10b446
+%define snapver 11351.git98b94d1e
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -35,8 +35,6 @@ Source101: libdpdk.so
 
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
-# Support for adding DPDK ports via initscripts
-Patch6: openvswitch-2.3.90-dpdk-ports-1.patch
 
 Patch10: openvswitch-multiqueue-v2.patch
 
@@ -115,8 +113,6 @@ overlays and security groups.
 %setup -q -n %{name}-%{srcver}
 
 %patch3 -p1 -b .dpdk-options
-%patch6 -p1 -b .dpdk-ports
-
 %patch10 -p1 -b .multiqueue
 
 %patch20 -p1 -b .dpdk-lib
@@ -405,6 +401,10 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Mon Jan 04 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-0.11351.git98b94d1e.1
+- New year, new snapshot
+- Drop upstreamed dpdk ports patch
+
 * Wed Dec 16 2015 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-0.11316.gitfe10b446.1
 - New snapshot
 
