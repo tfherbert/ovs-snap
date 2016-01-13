@@ -6,7 +6,7 @@
 
 %define ver 2.5.0
 %define rel 1
-%define snapver 11351.git98b94d1e
+%define snapver 11375.git976b4413
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -401,6 +401,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Wed Jan 13 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-0.11375.git976b4413.1
+- New snapshot
+
 * Mon Jan 04 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-0.11351.git98b94d1e.1
 - New year, new snapshot
 - Drop upstreamed dpdk ports patch
