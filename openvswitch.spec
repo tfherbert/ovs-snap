@@ -6,7 +6,7 @@
 
 %define ver 2.5.0
 %define rel 1
-%define snapver 11389.git23121bb7
+%define snapver 11397.git46a88d99
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -35,8 +35,6 @@ Source101: libdpdk.so
 
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
-
-Patch10: openvswitch-multiqueue-v2.patch
 
 # Use our own linker script
 Patch20: openvswitch-2.4.90-dpdk-lib-1.patch
@@ -113,7 +111,6 @@ overlays and security groups.
 %setup -q -n %{name}-%{srcver}
 
 %patch3 -p1 -b .dpdk-options
-%patch10 -p1 -b .multiqueue
 
 %patch20 -p1 -b .dpdk-lib
 
@@ -401,6 +398,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Fri Jan 29 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-0.11397.git46a88d99.1
+- New snapshot, vhost-user multiqueue support upstreamed
+
 * Tue Jan 26 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-0.11389.git23121bb7.1
 - New snapshot
 
