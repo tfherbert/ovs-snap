@@ -4,9 +4,9 @@
 %bcond_without dpdk
 %define dpdk_ver 2.2.0
 
-%define ver 2.5.0
+%define ver 2.5.90
 %define rel 1
-%define snapver 11397.git46a88d99
+%define snapver 11587.git9167fc1a
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -398,6 +398,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Mon Feb 01 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11587.git9167fc1a.1
+- New 2.5.90 based snapshot
+
 * Fri Jan 29 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-0.11397.git46a88d99.1
 - New snapshot, vhost-user multiqueue support upstreamed
 
