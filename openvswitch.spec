@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 11587.git9167fc1a
+%define snapver 11590.gitfa47c114
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -44,7 +44,7 @@ ExcludeArch: ppc
 BuildRequires: autoconf automake libtool
 BuildRequires: systemd-units openssl openssl-devel
 BuildRequires: python python-twisted-core python-zope-interface PyQt4
-BuildRequires: desktop-file-utils
+BuildRequires: desktop-file-utils python-six
 BuildRequires: groff graphviz
 
 %if %{with dpdk}
@@ -398,6 +398,10 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Tue Feb 02 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11590.gitfa47c114.1
+- New snapshot
+- Buildrequires python-six
+
 * Mon Feb 01 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11587.git9167fc1a.1
 - New 2.5.90 based snapshot
 
