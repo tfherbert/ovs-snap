@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 11590.gitfa47c114
+%define snapver 11686.git7b383a56
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -398,6 +398,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Thu Feb 11 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11686.git7b383a56.1
+- New snapshot
+
 * Tue Feb 02 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11590.gitfa47c114.1
 - New snapshot
 - Buildrequires python-six
