@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 11731.gitc6bd5e91
+%define snapver 11762.git1589ee5a
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -380,6 +380,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/ovn-docker-overlay-driver
 %{_bindir}/ovn-docker-underlay-driver
 %{_datadir}/openvswitch/scripts/ovn-ctl
+%{_datadir}/openvswitch/scripts/ovn-bugtool-nbctl-show
+%{_datadir}/openvswitch/scripts/ovn-bugtool-sbctl-lflow-list
+%{_datadir}/openvswitch/scripts/ovn-bugtool-sbctl-show
 %{_mandir}/man8/ovs-testcontroller.8*
 %{_mandir}/man5/ovn-nb.5*
 %{_mandir}/man5/ovn-sb.5*
@@ -398,6 +401,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Wed Feb 24 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11762.git1589ee5a.1
+- New snapshot
+
 * Mon Feb 22 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11731.gitc6bd5e91.1
 - New snapshot
 
