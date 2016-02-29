@@ -6,7 +6,7 @@
 
 %define ver 2.5.0
 %define rel 1
-%define snapver 11443.git575ceed7
+#define snapver 11443.git575ceed7
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -398,6 +398,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Mon Feb 29 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-1
+- OVS 2.5.0 final
+
 * Mon Feb 22 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-0.11443.git575ceed7.1
 - New snapshot
 
