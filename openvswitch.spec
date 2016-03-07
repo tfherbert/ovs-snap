@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 11762.git1589ee5a
+%define snapver 11810.git6019cb63
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -401,6 +401,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Mon Mar 07 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11810.git6019cb63.1
+- New snapshot
+
 * Wed Feb 24 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11762.git1589ee5a.1
 - New snapshot
 

@@ -7,6 +7,7 @@ GROUP (
   librte_cmdline.so
   librte_kvargs.so
   librte_vhost.so
+  librte_meter.so
   libethdev.so
   librte_pmd_ring.so
 )
