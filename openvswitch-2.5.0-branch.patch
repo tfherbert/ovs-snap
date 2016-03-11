@@ -1,0 +1,239 @@
+diff --git a/AUTHORS b/AUTHORS
+index ace39c7..cd48498 100644
+--- a/AUTHORS
++++ b/AUTHORS
+@@ -116,6 +116,7 @@ Krishna Kondaka         kkondaka@vmware.com
+ Kyle Mestery            mestery@mestery.com
+ Kyle Upton              kupton@baymicrosystems.com
+ Lars Kellogg-Stedman    lars@redhat.com
++Lei Huang               huang.f.lei@gmail.com
+ Leo Alterman            lalterman@nicira.com
+ Lilijun                 jerry.lilijun@huawei.com
+ Linda Sun               lsun@vmware.com
+@@ -219,6 +220,7 @@ YAMAMOTO Takashi        yamamoto@midokura.com
+ Yasuhito Takamiya       yasuhito@gmail.com
+ Yin Lin                 linyi@vmware.com
+ Yu Zhiguo               yuzg@cn.fujitsu.com
++Yuanhan Liu             yuanhan.liu@linux.intel.com
+ ZhengLingyun            konghuarukhr@163.com
+ Zoltán Balogh           zoltan.balogh@ericsson.com
+ Zoltan Kiss             zoltan.kiss@citrix.com
+diff --git a/INSTALL.DPDK.md b/INSTALL.DPDK.md
+index fb91ca4..d2fa55a 100644
+--- a/INSTALL.DPDK.md
++++ b/INSTALL.DPDK.md
+@@ -36,11 +36,11 @@ on Debian/Ubuntu)
+      Then run `make install` to build and install the library.
+      For default install without IVSHMEM:
+ 
+-     `make install T=x86_64-native-linuxapp-gcc`
++     `make install T=x86_64-native-linuxapp-gcc DESTDIR=install`
+ 
+      To include IVSHMEM (shared memory):
+ 
+-     `make install T=x86_64-ivshmem-linuxapp-gcc`
++     `make install T=x86_64-ivshmem-linuxapp-gcc DESTDIR=install`
+ 
+      For further details refer to http://dpdk.org/
+ 
+@@ -920,18 +920,6 @@ Restrictions:
+     increased to the desired number of queues. Both DPDK and OVS must be
+     recompiled for this change to take effect.
+ 
+-  vHost and QEMU v2.4.0+:
+-  - For versions of QEMU v2.4.0 and later, it is currently not possible to
+-    unbind more than one dpdkvhostuser port from the guest kernel driver
+-    without causing the ovs-vswitchd process to crash. If this is a requirement
+-    for your use case, it is recommended either to use a version of QEMU
+-    between v2.2.0 and v2.3.1 (inclusive), or alternatively, to apply the
+-    following patch to DPDK and rebuild:
+-    http://dpdk.org/dev/patchwork/patch/7736/
+-    This problem will likely be resolved in Open vSwitch at a later date, when
+-    the next release of DPDK (which includes the above patch) is available and
+-    integrated into OVS.
+-
+ Bug Reporting:
+ --------------
+ 
+diff --git a/datapath/linux/compat/stt.c b/datapath/linux/compat/stt.c
+index 5b68577..eb397e8 100644
+--- a/datapath/linux/compat/stt.c
++++ b/datapath/linux/compat/stt.c
+@@ -1347,6 +1347,7 @@ static void stt_rcv(struct stt_dev *stt_dev, struct sk_buff *skb)
+ 	if (unlikely(!validate_checksum(skb)))
+ 		goto drop;
+ 
++	__skb_pull(skb, sizeof(struct tcphdr));
+ 	skb = reassemble(skb);
+ 	if (!skb)
+ 		return;
+@@ -1490,7 +1491,7 @@ static unsigned int nf_ip_hook(FIRST_PARAM, struct sk_buff *skb, LAST_PARAM)
+ 	if (!stt_dev)
+ 		return NF_ACCEPT;
+ 
+-	__skb_pull(skb, ip_hdr_len + sizeof(struct tcphdr));
++	__skb_pull(skb, ip_hdr_len);
+ 	stt_rcv(stt_dev, skb);
+ 	return NF_STOLEN;
+ }
+diff --git a/lib/netdev-dpdk.c b/lib/netdev-dpdk.c
+index 75c369a..c0c2b33 100644
+--- a/lib/netdev-dpdk.c
++++ b/lib/netdev-dpdk.c
+@@ -278,7 +278,7 @@ free_dpdk_buf(struct dp_packet *p)
+ {
+     struct rte_mbuf *pkt = (struct rte_mbuf *) p;
+ 
+-    rte_pktmbuf_free_seg(pkt);
++    rte_pktmbuf_free(pkt);
+ }
+ 
+ static void
+@@ -776,6 +776,7 @@ netdev_dpdk_vhost_destruct(struct netdev *netdev_)
+     }
+ 
+     ovs_mutex_lock(&dpdk_mutex);
++    rte_free(dev->tx_q);
+     list_remove(&dev->list_node);
+     dpdk_mp_put(dev->dpdk_mp);
+     ovs_mutex_unlock(&dpdk_mutex);
+@@ -967,7 +968,7 @@ dpdk_queue_flush__(struct netdev_dpdk *dev, int qid)
+         int i;
+ 
+         for (i = nb_tx; i < txq->count; i++) {
+-            rte_pktmbuf_free_seg(txq->burst_pkts[i]);
++            rte_pktmbuf_free(txq->burst_pkts[i]);
+         }
+         rte_spinlock_lock(&dev->stats_lock);
+         dev->stats.tx_dropped += txq->count-nb_tx;
+diff --git a/lib/ofp-actions.c b/lib/ofp-actions.c
+index 6c83b67..f5b44d1 100644
+--- a/lib/ofp-actions.c
++++ b/lib/ofp-actions.c
+@@ -1086,9 +1086,9 @@ decode_bundle(bool load, const struct nx_action_bundle *nab,
+     for (i = 0; i < bundle->n_slaves; i++) {
+         uint16_t ofp_port = ntohs(((ovs_be16 *)(nab + 1))[i]);
+         ofpbuf_put(ofpacts, &ofp_port, sizeof ofp_port);
++        bundle = ofpacts->header;
+     }
+ 
+-    bundle = ofpacts->header;
+     ofpact_update_len(ofpacts, &bundle->ofpact);
+ 
+     if (!error) {
+@@ -6906,8 +6906,12 @@ ofpact_init(struct ofpact *ofpact, enum ofpact_type type, size_t len)
+ void
+ ofpact_update_len(struct ofpbuf *ofpacts, struct ofpact *ofpact)
+ {
++    ptrdiff_t len;
++
+     ovs_assert(ofpact == ofpacts->header);
+-    ofpact->len = (char *) ofpbuf_tail(ofpacts) - (char *) ofpact;
++    len = (char *) ofpbuf_tail(ofpacts) - (char *) ofpact;
++    ovs_assert(len <= UINT16_MAX);
++    ofpact->len = len;
+ }
+ 
+ /* Pads out 'ofpacts' to a multiple of OFPACT_ALIGNTO bytes in length.  Each
+diff --git a/lib/ofp-util.c b/lib/ofp-util.c
+index 31f9e93..2f689d6 100644
+--- a/lib/ofp-util.c
++++ b/lib/ofp-util.c
+@@ -7956,6 +7956,7 @@ ofputil_append_ofp15_group_desc_reply(const struct ofputil_group_desc *gds,
+         ofputil_put_group_prop_ntr_selection_method(version, &gds->props,
+                                                     reply);
+     }
++    ogds = ofpbuf_at_assert(reply, start_ogds, sizeof *ogds);
+     ogds->length = htons(reply->size - start_ogds);
+ 
+     ofpmp_postappend(replies, start_ogds);
+diff --git a/ovsdb/jsonrpc-server.c b/ovsdb/jsonrpc-server.c
+index 5983770..25f0940 100644
+--- a/ovsdb/jsonrpc-server.c
++++ b/ovsdb/jsonrpc-server.c
+@@ -1238,7 +1238,7 @@ ovsdb_jsonrpc_monitor_create(struct ovsdb_jsonrpc_session *s, struct ovsdb *db,
+     dbmon = ovsdb_monitor_add(m->dbmon);
+     if (dbmon != m->dbmon) {
+         /* Found an exisiting dbmon, reuse the current one. */
+-        ovsdb_monitor_remove_jsonrpc_monitor(m->dbmon, m);
++        ovsdb_monitor_remove_jsonrpc_monitor(m->dbmon, m, m->unflushed);
+         ovsdb_monitor_add_jsonrpc_monitor(dbmon, m);
+         m->dbmon = dbmon;
+     }
+@@ -1320,7 +1320,7 @@ ovsdb_jsonrpc_monitor_destroy(struct ovsdb_jsonrpc_monitor *m)
+ {
+     json_destroy(m->monitor_id);
+     hmap_remove(&m->session->monitors, &m->node);
+-    ovsdb_monitor_remove_jsonrpc_monitor(m->dbmon, m);
++    ovsdb_monitor_remove_jsonrpc_monitor(m->dbmon, m, m->unflushed);
+     free(m);
+ }
+ 
+diff --git a/ovsdb/monitor.c b/ovsdb/monitor.c
+index c0ed51a..186b722 100644
+--- a/ovsdb/monitor.c
++++ b/ovsdb/monitor.c
+@@ -843,7 +843,8 @@ ovsdb_monitor_get_initial(const struct ovsdb_monitor *dbmon)
+ 
+ void
+ ovsdb_monitor_remove_jsonrpc_monitor(struct ovsdb_monitor *dbmon,
+-                   struct ovsdb_jsonrpc_monitor *jsonrpc_monitor)
++                   struct ovsdb_jsonrpc_monitor *jsonrpc_monitor,
++                   uint64_t unflushed)
+ {
+     struct jsonrpc_monitor_node *jm;
+ 
+@@ -855,6 +856,12 @@ ovsdb_monitor_remove_jsonrpc_monitor(struct ovsdb_monitor *dbmon,
+     /* Find and remove the jsonrpc monitor from the list.  */
+     LIST_FOR_EACH(jm, node, &dbmon->jsonrpc_monitors) {
+         if (jm->jsonrpc_monitor == jsonrpc_monitor) {
++            /* Release the tracked changes. */
++            struct shash_node *node;
++            SHASH_FOR_EACH (node, &dbmon->tables) {
++                struct ovsdb_monitor_table *mt = node->data;
++                ovsdb_monitor_table_untrack_changes(mt, unflushed);
++            }
+             list_remove(&jm->node);
+             free(jm);
+ 
+diff --git a/ovsdb/monitor.h b/ovsdb/monitor.h
+index a8e5310..4318f20 100644
+--- a/ovsdb/monitor.h
++++ b/ovsdb/monitor.h
+@@ -36,10 +36,8 @@ void ovsdb_monitor_add_jsonrpc_monitor(struct ovsdb_monitor *dbmon,
+                        struct ovsdb_jsonrpc_monitor *jsonrpc_monitor);
+ 
+ void ovsdb_monitor_remove_jsonrpc_monitor(struct ovsdb_monitor *dbmon,
+-                       struct ovsdb_jsonrpc_monitor *jsonrpc_monitor);
+-
+-void ovsdb_monitor_remove_jsonrpc_monitor(struct ovsdb_monitor *dbmon,
+-                               struct ovsdb_jsonrpc_monitor *jsonrpc_monitor);
++                               struct ovsdb_jsonrpc_monitor *jsonrpc_monitor,
++                               uint64_t unflushed);
+ 
+ void ovsdb_monitor_add_table(struct ovsdb_monitor *m,
+                              const struct ovsdb_table *table);
+diff --git a/utilities/ovs-ofctl.8.in b/utilities/ovs-ofctl.8.in
+index 863503b..0795d38 100644
+--- a/utilities/ovs-ofctl.8.in
++++ b/utilities/ovs-ofctl.8.in
+@@ -455,16 +455,16 @@ be lifted in the future to allow for easier management.
+ These commands are Nicira extensions to OpenFlow and require Open vSwitch
+ 2.5 or later.
+ 
+-.IP "\fBadd\-TLV\-map \fIswitch option\fR[\fB,\fIoption\fR]..."
++.IP "\fBadd\-tlv\-map \fIswitch option\fR[\fB,\fIoption\fR]..."
+ Add each \fIoption\fR to \fIswitch\fR's tables. Duplicate fields are
+ rejected.
+ .
+-.IP "\fBdel\-TLV\-map \fIswitch \fR[\fIoption\fR[\fB,\fIoption\fR]]..."
++.IP "\fBdel\-tlv\-map \fIswitch \fR[\fIoption\fR[\fB,\fIoption\fR]]..."
+ Delete each \fIoption\fR from \fIswitch\fR's table, or all option TLV
+ mapping if no \fIoption\fR is specified.
+ Fields that aren't mapped are ignored.
+ .
+-.IP "\fBdump\-TLV\-map \fIswitch\fR"
++.IP "\fBdump\-tlv\-map \fIswitch\fR"
+ Show the currently mapped fields in the switch's option table as well
+ as switch capabilities.
+ .

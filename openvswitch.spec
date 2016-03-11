@@ -5,7 +5,7 @@
 %define dpdk_ver 2.2.0
 
 %define ver 2.5.0
-%define rel 1
+%define rel 2
 #define snapver 11443.git575ceed7
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -32,6 +32,9 @@ Source0: %{name}-%{srcver}.tar.gz
 Source100: ovs-snapshot.sh
 # custom linker script for dpdk
 Source101: libdpdk.so
+
+# Upstream "git diff d1bfe63625bae8560a941e993b09dc7a3b9a72ed.." of the day
+Patch1: openvswitch-2.5.0-branch.patch
 
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
@@ -109,6 +112,8 @@ overlays and security groups.
 
 %prep
 %setup -q -n %{name}-%{srcver}
+
+%patch1 -p1
 
 %patch3 -p1 -b .dpdk-options
 
@@ -398,6 +403,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Fri Mar 11 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-2
+- Pull in all fixes from 2.5-branch
+
 * Mon Feb 29 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-1
 - OVS 2.5.0 final
 
