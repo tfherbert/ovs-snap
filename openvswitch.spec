@@ -5,7 +5,7 @@
 %define dpdk_ver 2.2.0
 
 %define ver 2.5.0
-%define rel 2
+%define rel 3
 #define snapver 11443.git575ceed7
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -385,7 +385,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/ovn-docker-overlay-driver
 %{_bindir}/ovn-docker-underlay-driver
 %{_datadir}/openvswitch/scripts/ovn-ctl
-%{_mandir}/man8/ovs-testcontroller.8*
 %{_mandir}/man5/ovn-nb.5*
 %{_mandir}/man5/ovn-sb.5*
 %{_mandir}/man7/ovn-architecture.7*
@@ -403,6 +402,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Wed Mar 23 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-3
+- ovs-testcontroller man page does not belong to -ovn sub-package, oops
+
 * Fri Mar 11 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-2
 - Pull in all fixes from 2.5-branch
 
