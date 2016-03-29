@@ -5,8 +5,8 @@
 %define dpdk_ver 2.2.0
 
 %define ver 2.5.90
-%define rel 2
-%define snapver 11888.git8d679ccd
+%define rel 1
+%define snapver 11929.git1cef5fff
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -96,16 +96,50 @@ Provides: openvswitch-static = %{version}-%{release}
 This provides static library, libopenswitch.a and the openvswitch header
 files needed to build an external application.
 
-%package ovn
+%package ovn-central
 Summary: Open vSwitch - Open Virtual Network support
 License: ASL 2.0
-Requires: openvswitch
+Requires: openvswitch openvswitch-ovn-common
 
-%description ovn
+%description ovn-central
 OVN, the Open Virtual Network, is a system to support virtual network
 abstraction.  OVN complements the existing capabilities of OVS to add
 native support for virtual network abstractions, such as virtual L2 and L3
 overlays and security groups.
+
+%package ovn-host
+Summary: Open vSwitch - Open Virtual Network support
+License: ASL 2.0
+Requires: openvswitch openvswitch-ovn-common
+
+%description ovn-host
+OVN, the Open Virtual Network, is a system to support virtual network
+abstraction.  OVN complements the existing capabilities of OVS to add
+native support for virtual network abstractions, such as virtual L2 and L3
+overlays and security groups.
+
+%package ovn-vtep
+Summary: Open vSwitch - Open Virtual Network support
+License: ASL 2.0
+Requires: openvswitch openvswitch-ovn-common
+
+%description ovn-vtep
+OVN vtep controller
+%package ovn-common
+Summary: Open vSwitch - Open Virtual Network support
+License: ASL 2.0
+Requires: openvswitch
+
+%description ovn-common
+Utilities that are use to diagnose and manage the OVN components.
+
+%package ovn-docker
+Summary: Open vSwitch - Open Virtual Network support
+License: ASL 2.0
+Requires: openvswitch openvswitch-ovn-common python-openvswitch
+
+%description ovn-docker
+Docker network plugins for OVN.
 
 %prep
 %setup -q -n %{name}-%{srcver}
@@ -143,7 +177,8 @@ install -d -m 0755 $RPM_BUILD_ROOT%{_sysconfdir}/openvswitch
 install -p -D -m 0644 \
         rhel/usr_share_openvswitch_scripts_systemd_sysconfig.template \
         $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/openvswitch
-for service in openvswitch openvswitch-nonetwork ovn-controller ovn-northd; do
+for service in openvswitch openvswitch-nonetwork \
+		ovn-controller ovn-controller-vtep ovn-northd; do
         install -p -D -m 0644 \
                         rhel/usr_lib_systemd_system_${service}.service \
                         $RPM_BUILD_ROOT%{_unitdir}/${service}.service
@@ -224,17 +259,36 @@ rm -rf $RPM_BUILD_ROOT
     fi
 %endif
 
-%preun ovn
+%preun ovn-central
 %if 0%{?systemd_preun:1}
-    %systemd_preun ovn-controller.service
     %systemd_preun ovn-northd.service
 %else
     if [ $1 -eq 0 ] ; then
-    # Package removal, not upgrade
-        /bin/systemctl --no-reload disable ovn-controller.service >/dev/null 2>&1 || :
-        /bin/systemctl stop ovn-controller.service >/dev/null 2>&1 || :
+        # Package removal, not upgrade
         /bin/systemctl --no-reload disable ovn-northd.service >/dev/null 2>&1 || :
         /bin/systemctl stop ovn-northd.service >/dev/null 2>&1 || :
+    fi
+%endif
+
+%preun ovn-host
+%if 0%{?systemd_preun:1}
+    %systemd_preun ovn-controller.service
+%else
+    if [ $1 -eq 0 ] ; then
+        # Package removal, not upgrade
+        /bin/systemctl --no-reload disable ovn-controller.service >/dev/null 2>&1 || :
+        /bin/systemctl stop ovn-controller.service >/dev/null 2>&1 || :
+    fi
+%endif
+
+%preun ovn-vtep
+%if 0%{?systemd_preun:1}
+    %systemd_preun ovn-controller-vtep.service
+%else
+    if [ $1 -eq 0 ] ; then
+        # Package removal, not upgrade
+        /bin/systemctl --no-reload disable ovn-controller-vtep.service >/dev/null 2>&1 || :
+        /bin/systemctl stop ovn-controller-vtep.service >/dev/null 2>&1 || :
     fi
 %endif
 
@@ -248,9 +302,8 @@ rm -rf $RPM_BUILD_ROOT
     fi
 %endif
 
-%post ovn
+%post ovn-central
 %if 0%{?systemd_post:1}
-    %systemd_post ovn-controller.service
     %systemd_post ovn-northd.service
 %else
     # Package install, not upgrade
@@ -259,16 +312,25 @@ rm -rf $RPM_BUILD_ROOT
     fi
 %endif
 
-# Package with native systemd unit file is installed for the first time
-%triggerun -- %{name} < 1.9.0-1
-# Save the current service runlevel info
-# User must manually run systemd-sysv-convert --apply openvswitch
-# to migrate them to systemd targets
-/usr/bin/systemd-sysv-convert --save %{name} >/dev/null 2>&1 ||:
+%post ovn-host
+%if 0%{?systemd_post:1}
+    %systemd_post ovn-controller.service
+%else
+    # Package install, not upgrade
+    if [ $1 -eq 1 ]; then
+        /bin/systemctl daemon-reload >dev/null || :
+    fi
+%endif
 
-# Run these because the SysV package being removed won't do them
-/sbin/chkconfig --del %{name} >/dev/null 2>&1 || :
-/bin/systemctl try-restart %{name}.service >/dev/null 2>&1 || :
+%post ovn-vtep
+%if 0%{?systemd_post:1}
+    %systemd_post ovn-controller-vtep.service
+%else
+    # Package install, not upgrade
+    if [ $1 -eq 1 ]; then
+        /bin/systemctl daemon-reload >dev/null || :
+    fi
+%endif
 
 %postun
 %if 0%{?systemd_postun_with_restart:1}
@@ -281,16 +343,36 @@ rm -rf $RPM_BUILD_ROOT
     fi
 %endif
 
-%postun ovn
+%postun ovn-central
 %if 0%{?systemd_postun_with_restart:1}
-    %systemd_postun_with_restart ovn-controller.service
     %systemd_postun_with_restart ovn-northd.service
 %else
     /bin/systemctl daemon-reload >/dev/null 2>&1 || :
     if [ "$1" -ge "1" ] ; then
     # Package upgrade, not uninstall
-        /bin/systemctl try-restart ovn-controller.service >/dev/null 2>&1 || :
         /bin/systemctl try-restart ovn-northd.service >/dev/null 2>&1 || :
+    fi
+%endif
+
+%postun ovn-host
+%if 0%{?systemd_postun_with_restart:1}
+    %systemd_postun_with_restart ovn-controller.service
+%else
+    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+    if [ "$1" -ge "1" ] ; then
+        # Package upgrade, not uninstall
+        /bin/systemctl try-restart ovn-controller.service >/dev/null 2>&1 || :
+    fi
+%endif
+
+%postun ovn-vtep
+%if 0%{?systemd_postun_with_restart:1}
+    %systemd_postun_with_restart ovn-controller-vtep.service
+%else
+    /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+    if [ "$1" -ge "1" ] ; then
+        # Package upgrade, not uninstall
+        /bin/systemctl try-restart ovn-controller-vtep.service >/dev/null 2>&1 || :
     fi
 %endif
 
@@ -370,38 +452,48 @@ rm -rf $RPM_BUILD_ROOT
 %doc FAQ.md NEWS INSTALL.DPDK.md rhel/README.RHEL
 /var/lib/openvswitch
 /var/log/openvswitch
+%ghost %attr(755,root,root) %{_rundir}/openvswitch
 
-%files ovn
-%{_bindir}/ovn-controller
-%{_bindir}/ovn-controller-vtep
-%{_bindir}/ovn-nbctl
-%{_bindir}/ovn-sbctl
-%{_bindir}/ovn-northd
+%files ovn-docker
 %{_bindir}/ovn-docker-overlay-driver
 %{_bindir}/ovn-docker-underlay-driver
+
+%files ovn-common
+%{_bindir}/ovn-nbctl
+%{_bindir}/ovn-sbctl
 %{_datadir}/openvswitch/scripts/ovn-ctl
 %{_datadir}/openvswitch/scripts/ovn-bugtool-nbctl-show
 %{_datadir}/openvswitch/scripts/ovn-bugtool-sbctl-lflow-list
 %{_datadir}/openvswitch/scripts/ovn-bugtool-sbctl-show
-%{_mandir}/man5/ovn-nb.5*
-%{_mandir}/man5/ovn-sb.5*
-%{_mandir}/man7/ovn-architecture.7*
-%{_mandir}/man8/ovn-controller.8*
-%{_mandir}/man8/ovn-controller-vtep.8*
 %{_mandir}/man8/ovn-ctl.8*
 %{_mandir}/man8/ovn-nbctl.8*
-%{_mandir}/man8/ovn-northd.8*
+%{_mandir}/man7/ovn-architecture.7*
 %{_mandir}/man8/ovn-sbctl.8*
+%{_mandir}/man5/ovn-nb.5*
+%{_mandir}/man5/ovn-sb.5*
+
+%files ovn-central
+%{_bindir}/ovn-northd
+%{_mandir}/man8/ovn-northd.8*
 %config %{_datadir}/openvswitch/ovn-nb.ovsschema
 %config %{_datadir}/openvswitch/ovn-sb.ovsschema
-%{_unitdir}/ovn-controller.service
 %{_unitdir}/ovn-northd.service
-%ghost %attr(755,root,root) /var/lib/ovn-controller
-%ghost %attr(755,root,root) /var/lib/ovn-northd
+
+%files ovn-host
+%{_bindir}/ovn-controller
+%{_mandir}/man8/ovn-controller.8*
+%{_unitdir}/ovn-controller.service
+
+%files ovn-vtep
+%{_bindir}/ovn-controller-vtep
+%{_mandir}/man8/ovn-controller-vtep.8*
+%{_unitdir}/ovn-controller-vtep.service
 
 %changelog
-* Wed Mar 23 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11888.git8d679ccd.2
-- ovs-testcontroller man page does not belong to -ovn sub-package, oops
+* Tue Mar 29 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11929.git1cef5fff.1
+- new snapshot
+- sync up ovn packaging with upstream (split to many pieces)
+- remove trigger for ancient ovs versions
 
 * Wed Mar 23 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11888.git8d679ccd.1
 - New snapshot
