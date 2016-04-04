@@ -5,7 +5,7 @@
 %define dpdk_ver 2.2.0
 
 %define ver 2.5.0
-%define rel 3
+%define rel 4.gite099c86c
 #define snapver 11443.git575ceed7
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -402,6 +402,10 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Mon Apr 04 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-4.gite099c86c
+- Updated snapshot from 2.5-branch
+- Add git hash to release for determining exact upstream version used
+
 * Wed Mar 23 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-3
 - ovs-testcontroller man page does not belong to -ovn sub-package, oops
 

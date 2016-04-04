@@ -1,8 +1,16 @@
 diff --git a/AUTHORS b/AUTHORS
-index ace39c7..cd48498 100644
+index ace39c7..9ba1a36 100644
 --- a/AUTHORS
 +++ b/AUTHORS
-@@ -116,6 +116,7 @@ Krishna Kondaka         kkondaka@vmware.com
+@@ -86,6 +86,7 @@ Helmut Schaa            helmut.schaa@googlemail.com
+ Hiteshi Kalra           hiteshi.kalra@tcs.com
+ Huanle Han              hanxueluo@gmail.com
+ Ian Campbell            Ian.Campbell@citrix.com
++Ian Stokes              ian.stokes@intel.com
+ Ilya Maximets           i.maximets@samsung.com
+ Isaku Yamahata          yamahata@valinux.co.jp
+ James P.                roampune@gmail.com
+@@ -116,6 +117,7 @@ Krishna Kondaka         kkondaka@vmware.com
  Kyle Mestery            mestery@mestery.com
  Kyle Upton              kupton@baymicrosystems.com
  Lars Kellogg-Stedman    lars@redhat.com
@@ -10,7 +18,7 @@ index ace39c7..cd48498 100644
  Leo Alterman            lalterman@nicira.com
  Lilijun                 jerry.lilijun@huawei.com
  Linda Sun               lsun@vmware.com
-@@ -219,6 +220,7 @@ YAMAMOTO Takashi        yamamoto@midokura.com
+@@ -219,6 +221,7 @@ YAMAMOTO Takashi        yamamoto@midokura.com
  Yasuhito Takamiya       yasuhito@gmail.com
  Yin Lin                 linyi@vmware.com
  Yu Zhiguo               yuzg@cn.fujitsu.com
@@ -18,6 +26,22 @@ index ace39c7..cd48498 100644
  ZhengLingyun            konghuarukhr@163.com
  Zoltán Balogh           zoltan.balogh@ericsson.com
  Zoltan Kiss             zoltan.kiss@citrix.com
+@@ -299,7 +302,6 @@ Henrik Amren            henrik@nicira.com
+ Hiroshi Tanaka          htanaka@nicira.com
+ Hiroshi Miyata          miyahiro.dazu@gmail.com
+ Hyojoon Kim             joonk@gatech.edu
+-Ian Stokes              ian.stokes@intel.com
+ Igor Ganichev           iganichev@nicira.com
+ Igor Sever              igor@xorops.com
+ Jacob Cherkas           jcherkas@nicira.com
+@@ -347,6 +349,7 @@ Michael Shigorin        mike@osdn.org.ua
+ Mihir Gangar            gangarm@vmware.com
+ Mike Bursell            mike.bursell@citrix.com
+ Mike Kruze              mkruze@nicira.com
++Mike Qing               mqing@vmware.com
+ Min Chen                ustcer.tonychan@gmail.com
+ Mikael Doverhag         mdoverhag@nicira.com
+ Mrinmoy Das             mrdas@ixiacom.com
 diff --git a/INSTALL.DPDK.md b/INSTALL.DPDK.md
 index fb91ca4..d2fa55a 100644
 --- a/INSTALL.DPDK.md
@@ -55,6 +79,19 @@ index fb91ca4..d2fa55a 100644
  Bug Reporting:
  --------------
  
+diff --git a/acinclude.m4 b/acinclude.m4
+index 11c7787..46336a0 100644
+--- a/acinclude.m4
++++ b/acinclude.m4
+@@ -398,7 +398,7 @@ AC_DEFUN([OVS_CHECK_LINUX_COMPAT], [
+   OVS_GREP_IFELSE([$KSRC/include/linux/netfilter.h], [nf_hookfn.*nf_hook_ops],
+                   [OVS_DEFINE([HAVE_NF_HOOKFN_ARG_OPS])])
+   OVS_FIND_FIELD_IFELSE([$KSRC/include/linux/netfilter_ipv6.h], [nf_ipv6_ops],
+-                        [fragment], [OVS_DEFINE([HAVE_NF_IPV6_OPS_FRAGMENT])])
++                        [fragment.*sock], [OVS_DEFINE([HAVE_NF_IPV6_OPS_FRAGMENT])])
+ 
+   OVS_GREP_IFELSE([$KSRC/include/net/netfilter/nf_conntrack.h],
+                   [tmpl_alloc.*conntrack_zone],
 diff --git a/datapath/linux/compat/stt.c b/datapath/linux/compat/stt.c
 index 5b68577..eb397e8 100644
 --- a/datapath/linux/compat/stt.c
@@ -77,10 +114,20 @@ index 5b68577..eb397e8 100644
  	return NF_STOLEN;
  }
 diff --git a/lib/netdev-dpdk.c b/lib/netdev-dpdk.c
-index 75c369a..c0c2b33 100644
+index 75c369a..4cdec3c 100644
 --- a/lib/netdev-dpdk.c
 +++ b/lib/netdev-dpdk.c
-@@ -278,7 +278,7 @@ free_dpdk_buf(struct dp_packet *p)
+@@ -101,6 +101,9 @@ BUILD_ASSERT_DECL((MAX_NB_MBUF / ROUND_DOWN_POW2(MAX_NB_MBUF/MIN_NB_MBUF))
+ #define NIC_PORT_TX_Q_SIZE 2048  /* Size of Physical NIC TX Queue, Max (n+32<=4096)*/
+ 
+ #define OVS_VHOST_MAX_QUEUE_NUM 1024  /* Maximum number of vHost TX queues. */
++#define OVS_VHOST_QUEUE_MAP_UNKNOWN (-1) /* Mapping not initialized. */
++#define OVS_VHOST_QUEUE_DISABLED    (-2) /* Queue was disabled by guest and not
++                                          * yet mapped to another queue. */
+ 
+ static char *cuse_dev_name = NULL;    /* Character device cuse_dev_name. */
+ static char *vhost_sock_dir = NULL;   /* Location of vhost-user sockets */
+@@ -278,7 +281,7 @@ free_dpdk_buf(struct dp_packet *p)
  {
      struct rte_mbuf *pkt = (struct rte_mbuf *) p;
  
@@ -89,7 +136,33 @@ index 75c369a..c0c2b33 100644
  }
  
  static void
-@@ -776,6 +776,7 @@ netdev_dpdk_vhost_destruct(struct netdev *netdev_)
+@@ -578,7 +581,7 @@ netdev_dpdk_alloc_txq(struct netdev_dpdk *netdev, unsigned int n_txqs)
+         }
+ 
+         /* Initialize map for vhost devices. */
+-        netdev->tx_q[i].map = -1;
++        netdev->tx_q[i].map = OVS_VHOST_QUEUE_MAP_UNKNOWN;
+         rte_spinlock_init(&netdev->tx_q[i].tx_lock);
+     }
+ }
+@@ -763,10 +766,13 @@ netdev_dpdk_vhost_destruct(struct netdev *netdev_)
+ {
+     struct netdev_dpdk *dev = netdev_dpdk_cast(netdev_);
+ 
+-    /* Can't remove a port while a guest is attached to it. */
++    /* Guest becomes an orphan if still attached. */
+     if (netdev_dpdk_get_virtio(dev) != NULL) {
+-        VLOG_ERR("Can not remove port, vhost device still attached");
+-                return;
++        VLOG_ERR("Removing port '%s' while vhost device still attached.",
++                 netdev_->name);
++        VLOG_ERR("To restore connectivity after re-adding of port, VM on socket"
++                 " '%s' must be restarted.",
++                 dev->vhost_id);
+     }
+ 
+     if (rte_vhost_driver_unregister(dev->vhost_id)) {
+@@ -776,6 +782,7 @@ netdev_dpdk_vhost_destruct(struct netdev *netdev_)
      }
  
      ovs_mutex_lock(&dpdk_mutex);
@@ -97,7 +170,7 @@ index 75c369a..c0c2b33 100644
      list_remove(&dev->list_node);
      dpdk_mp_put(dev->dpdk_mp);
      ovs_mutex_unlock(&dpdk_mutex);
-@@ -967,7 +968,7 @@ dpdk_queue_flush__(struct netdev_dpdk *dev, int qid)
+@@ -967,7 +974,7 @@ dpdk_queue_flush__(struct netdev_dpdk *dev, int qid)
          int i;
  
          for (i = nb_tx; i < txq->count; i++) {
@@ -106,6 +179,71 @@ index 75c369a..c0c2b33 100644
          }
          rte_spinlock_lock(&dev->stats_lock);
          dev->stats.tx_dropped += txq->count-nb_tx;
+@@ -1122,7 +1129,7 @@ __netdev_dpdk_vhost_send(struct netdev *netdev, int qid,
+ 
+     qid = vhost_dev->tx_q[qid % vhost_dev->real_n_txq].map;
+ 
+-    if (OVS_UNLIKELY(!is_vhost_running(virtio_dev) || qid == -1)) {
++    if (OVS_UNLIKELY(!is_vhost_running(virtio_dev) || qid < 0)) {
+         rte_spinlock_lock(&vhost_dev->stats_lock);
+         vhost_dev->stats.tx_dropped+= cnt;
+         rte_spinlock_unlock(&vhost_dev->stats_lock);
+@@ -1848,7 +1855,7 @@ netdev_dpdk_remap_txqs(struct netdev_dpdk *netdev)
+     }
+ 
+     if (n_enabled == 0 && total_txqs != 0) {
+-        enabled_queues[0] = -1;
++        enabled_queues[0] = OVS_VHOST_QUEUE_DISABLED;
+         n_enabled = 1;
+     }
+ 
+@@ -1885,6 +1892,10 @@ netdev_dpdk_vhost_set_queues(struct netdev_dpdk *netdev, struct virtio_net *dev)
+     netdev->real_n_rxq = qp_num;
+     netdev->real_n_txq = qp_num;
+     netdev->txq_needs_locking = true;
++    /* Enable TX queue 0 by default if it wasn't disabled. */
++    if (netdev->tx_q[0].map == OVS_VHOST_QUEUE_MAP_UNKNOWN) {
++        netdev->tx_q[0].map = 0;
++    }
+ 
+     netdev_dpdk_remap_txqs(netdev);
+ 
+@@ -1933,6 +1944,18 @@ new_device(struct virtio_net *dev)
+     return 0;
+ }
+ 
++/* Clears mapping for all available queues of vhost interface. */
++static void
++netdev_dpdk_txq_map_clear(struct netdev_dpdk *dev)
++    OVS_REQUIRES(dev->mutex)
++{
++    int i;
++
++    for (i = 0; i < dev->real_n_txq; i++) {
++        dev->tx_q[i].map = OVS_VHOST_QUEUE_MAP_UNKNOWN;
++    }
++}
++
+ /*
+  * Remove a virtio-net device from the specific vhost port.  Use dev->remove
+  * flag to stop any more packets from being sent or received to/from a VM and
+@@ -1952,6 +1975,7 @@ destroy_device(volatile struct virtio_net *dev)
+             ovs_mutex_lock(&vhost_dev->mutex);
+             dev->flags &= ~VIRTIO_DEV_RUNNING;
+             ovsrcu_set(&vhost_dev->virtio_dev, NULL);
++            netdev_dpdk_txq_map_clear(vhost_dev);
+             exists = true;
+             ovs_mutex_unlock(&vhost_dev->mutex);
+             break;
+@@ -1998,7 +2022,7 @@ vring_state_changed(struct virtio_net *dev, uint16_t queue_id, int enable)
+             if (enable) {
+                 vhost_dev->tx_q[qid].map = qid;
+             } else {
+-                vhost_dev->tx_q[qid].map = -1;
++                vhost_dev->tx_q[qid].map = OVS_VHOST_QUEUE_DISABLED;
+             }
+             netdev_dpdk_remap_txqs(vhost_dev);
+             exists = true;
 diff --git a/lib/ofp-actions.c b/lib/ofp-actions.c
 index 6c83b67..f5b44d1 100644
 --- a/lib/ofp-actions.c
@@ -147,6 +285,118 @@ index 31f9e93..2f689d6 100644
      ogds->length = htons(reply->size - start_ogds);
  
      ofpmp_postappend(replies, start_ogds);
+diff --git a/lib/ovs-rcu.h b/lib/ovs-rcu.h
+index 5cd4152..299e516 100644
+--- a/lib/ovs-rcu.h
++++ b/lib/ovs-rcu.h
+@@ -56,7 +56,8 @@
+  *
+  *         Brackets a time period during which the current thread is quiescent.
+  *
+- * A newly created thread is initially active, not quiescent.
++ * A newly created thread is initially active, not quiescent. When a process
++ * becomes multithreaded, the main thread becomes active, not quiescent.
+  *
+  * When a quiescient state has occurred in every thread, we say that a "grace
+  * period" has occurred.  Following a grace period, all of the callbacks
+diff --git a/lib/ovs-thread.c b/lib/ovs-thread.c
+index 7855b3a..664110d 100644
+--- a/lib/ovs-thread.c
++++ b/lib/ovs-thread.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2013, 2014, 2015 Nicira, Inc.
++ * Copyright (c) 2013, 2014, 2015, 2016 Nicira, Inc.
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+@@ -340,28 +340,72 @@ ovsthread_wrapper(void *aux_)
+     return aux.start(aux.arg);
+ }
+ 
++static void
++set_min_stack_size(pthread_attr_t *attr, size_t min_stacksize)
++{
++    size_t stacksize;
++    int error;
++
++    error = pthread_attr_getstacksize(attr, &stacksize);
++    if (error) {
++        ovs_abort(error, "pthread_attr_getstacksize failed");
++    }
++
++    if (stacksize < min_stacksize) {
++        error = pthread_attr_setstacksize(attr, min_stacksize);
++        if (error) {
++            ovs_abort(error, "pthread_attr_setstacksize failed");
++        }
++    }
++}
++
+ /* Starts a thread that calls 'start(arg)'.  Sets the thread's name to 'name'
+  * (suffixed by its ovsthread_id()).  Returns the new thread's pthread_t. */
+ pthread_t
+ ovs_thread_create(const char *name, void *(*start)(void *), void *arg)
+ {
++    static struct ovsthread_once once = OVSTHREAD_ONCE_INITIALIZER;
+     struct ovsthread_aux *aux;
+     pthread_t thread;
+     int error;
+ 
+     forbid_forking("multiple threads exist");
+     multithreaded = true;
+-    ovsrcu_quiesce_end();
++
++    if (ovsthread_once_start(&once)) {
++        /* The first call to this function has to happen in the main thread.
++         * Before the process becomes multithreaded we make sure that the
++         * main thread is considered non quiescent.
++         *
++         * For other threads this is done in ovs_thread_wrapper(), but the
++         * main thread has no such wrapper.
++         *
++         * There's no reason to call ovsrcu_quiesce_end() in subsequent
++         * invocations of this function and it might introduce problems
++         * for other threads. */
++        ovsrcu_quiesce_end();
++        ovsthread_once_done(&once);
++    }
+ 
+     aux = xmalloc(sizeof *aux);
+     aux->start = start;
+     aux->arg = arg;
+     ovs_strlcpy(aux->name, name, sizeof aux->name);
+ 
+-    error = pthread_create(&thread, NULL, ovsthread_wrapper, aux);
++    /* Some small systems use a default stack size as small as 80 kB, but OVS
++     * requires approximately 384 kB according to the following analysis:
++     * http://openvswitch.org/pipermail/dev/2016-January/065049.html
++     *
++     * We use 512 kB to give us some margin of error. */
++    pthread_attr_t attr;
++    pthread_attr_init(&attr);
++    set_min_stack_size(&attr, 512 * 1024);
++
++    error = pthread_create(&thread, &attr, ovsthread_wrapper, aux);
+     if (error) {
+         ovs_abort(error, "pthread_create failed");
+     }
++    pthread_attr_destroy(&attr);
+     return thread;
+ }
+ 
+diff --git a/ofproto/ofproto-dpif.c b/ofproto/ofproto-dpif.c
+index 5a65020..83dcc9c 100644
+--- a/ofproto/ofproto-dpif.c
++++ b/ofproto/ofproto-dpif.c
+@@ -5063,6 +5063,7 @@ ofproto_trace(struct ofproto_dpif *ofproto, struct flow *flow,
+ 
+     error = xlate_actions(&trace.xin, &trace.xout);
+     ds_put_char(ds, '\n');
++    trace.xin.flow.actset_output = 0;
+     trace_format_flow(ds, 0, "Final flow", &trace);
+     trace_format_megaflow(ds, 0, "Megaflow", &trace);
+ 
 diff --git a/ovsdb/jsonrpc-server.c b/ovsdb/jsonrpc-server.c
 index 5983770..25f0940 100644
 --- a/ovsdb/jsonrpc-server.c
@@ -213,6 +463,107 @@ index a8e5310..4318f20 100644
  
  void ovsdb_monitor_add_table(struct ovsdb_monitor *m,
                               const struct ovsdb_table *table);
+diff --git a/tests/automake.mk b/tests/automake.mk
+index b2682f9..dc0ad8b 100644
+--- a/tests/automake.mk
++++ b/tests/automake.mk
+@@ -308,6 +308,7 @@ tests_ovstest_SOURCES = \
+ 	tests/test-ovn.c \
+ 	tests/test-packets.c \
+ 	tests/test-random.c \
++	tests/test-rcu.c \
+ 	tests/test-reconnect.c \
+ 	tests/test-rstp.c \
+ 	tests/test-sflow.c \
+diff --git a/tests/library.at b/tests/library.at
+index d5dcb12..e8853fd 100644
+--- a/tests/library.at
++++ b/tests/library.at
+@@ -212,3 +212,7 @@ AT_CLEANUP
+ AT_SETUP([test ofpbuf module])
+ AT_CHECK([ovstest test-ofpbuf], [0], [])
+ AT_CLEANUP
++
++AT_SETUP([test rcu])
++AT_CHECK([ovstest test-rcu-quiesce], [0], [])
++AT_CLEANUP
+diff --git a/tests/ofproto-dpif.at b/tests/ofproto-dpif.at
+index 689aec0..7cfd6bf 100644
+--- a/tests/ofproto-dpif.at
++++ b/tests/ofproto-dpif.at
+@@ -7216,3 +7216,14 @@ dpif_netdev|DBG|flow_add: recirc_id=0,in_port=1,vlan_tci=0xf063/0x1000,dl_type=0
+ ])
+ OVS_VSWITCHD_STOP
+ AT_CLEANUP
++
++AT_SETUP([ofproto-dpif - trace (unchanged)])
++OVS_VSWITCHD_START
++AT_CHECK([ovs-appctl ofproto/trace br0 'in_port=1'], [0], [stdout])
++AT_CHECK([grep "Final flow:" stdout], [0], [Final flow: unchanged
++])
++AT_CHECK([ovs-appctl ofproto/trace ovs-dummy 'in_port(100)'], [0], [stdout])
++AT_CHECK([grep "Final flow:" stdout], [0], [Final flow: unchanged
++])
++OVS_VSWITCHD_STOP
++AT_CLEANUP
+diff --git a/tests/test-rcu.c b/tests/test-rcu.c
+new file mode 100644
+index 0000000..e66367e
+--- /dev/null
++++ b/tests/test-rcu.c
+@@ -0,0 +1,52 @@
++/*
++ * Copyright (c) 2016 Nicira, Inc.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at:
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include <config.h>
++#undef NDEBUG
++#include "fatal-signal.h"
++#include "ovs-rcu.h"
++#include "ovs-thread.h"
++#include "ovstest.h"
++#include "util.h"
++
++static void *
++quiescer_main(void *aux OVS_UNUSED)
++{
++    /* A new thread must be not be quiescent */
++    ovs_assert(!ovsrcu_is_quiescent());
++    ovsrcu_quiesce_start();
++    /* After the above call it must be quiescent */
++    ovs_assert(ovsrcu_is_quiescent());
++
++    return NULL;
++}
++
++static void
++test_rcu_quiesce(int argc OVS_UNUSED, char *argv[] OVS_UNUSED)
++{
++    pthread_t quiescer;
++
++    fatal_signal_init();
++    quiescer = ovs_thread_create("quiescer", quiescer_main, NULL);
++
++    /* This is the main thread of the process. After spawning its first
++     * thread it must not be quiescent. */
++    ovs_assert(!ovsrcu_is_quiescent());
++
++    xpthread_join(quiescer, NULL);
++}
++
++OVSTEST_REGISTER("test-rcu-quiesce", test_rcu_quiesce);
 diff --git a/utilities/ovs-ofctl.8.in b/utilities/ovs-ofctl.8.in
 index 863503b..0795d38 100644
 --- a/utilities/ovs-ofctl.8.in
@@ -237,3 +588,80 @@ index 863503b..0795d38 100644
  Show the currently mapped fields in the switch's option table as well
  as switch capabilities.
  .
+diff --git a/vswitchd/bridge.c b/vswitchd/bridge.c
+index 759d5a7..566e7e0 100644
+--- a/vswitchd/bridge.c
++++ b/vswitchd/bridge.c
+@@ -3128,6 +3128,7 @@ qos_unixctl_show(struct unixctl_conn *conn, int argc OVS_UNUSED,
+     struct iface *iface;
+     const char *type;
+     struct smap_node *node;
++    int error;
+ 
+     iface = iface_find(argv[1]);
+     if (!iface) {
+@@ -3135,28 +3136,33 @@ qos_unixctl_show(struct unixctl_conn *conn, int argc OVS_UNUSED,
+         return;
+     }
+ 
+-    netdev_get_qos(iface->netdev, &type, &smap);
++    error = netdev_get_qos(iface->netdev, &type, &smap);
++    if (!error) {
++        if (*type != '\0') {
++            struct netdev_queue_dump dump;
++            struct smap details;
++            unsigned int queue_id;
+ 
+-    if (*type != '\0') {
+-        struct netdev_queue_dump dump;
+-        struct smap details;
+-        unsigned int queue_id;
++            ds_put_format(&ds, "QoS: %s %s\n", iface->name, type);
+ 
+-        ds_put_format(&ds, "QoS: %s %s\n", iface->name, type);
++            SMAP_FOR_EACH (node, &smap) {
++                ds_put_format(&ds, "%s: %s\n", node->key, node->value);
++            }
+ 
+-        SMAP_FOR_EACH (node, &smap) {
+-            ds_put_format(&ds, "%s: %s\n", node->key, node->value);
+-        }
++            smap_init(&details);
++            NETDEV_QUEUE_FOR_EACH (&queue_id, &details, &dump, iface->netdev) {
++                qos_unixctl_show_queue(queue_id, &details, iface, &ds);
++            }
++            smap_destroy(&details);
+ 
+-        smap_init(&details);
+-        NETDEV_QUEUE_FOR_EACH (&queue_id, &details, &dump, iface->netdev) {
+-            qos_unixctl_show_queue(queue_id, &details, iface, &ds);
++            unixctl_command_reply(conn, ds_cstr(&ds));
++        } else {
++            ds_put_format(&ds, "QoS not configured on %s\n", iface->name);
++            unixctl_command_reply_error(conn, ds_cstr(&ds));
+         }
+-        smap_destroy(&details);
+-
+-        unixctl_command_reply(conn, ds_cstr(&ds));
+     } else {
+-        ds_put_format(&ds, "QoS not configured on %s\n", iface->name);
++        ds_put_format(&ds, "%s: failed to retrieve QOS configuration (%s)\n",
++                      iface->name, ovs_strerror(error));
+         unixctl_command_reply_error(conn, ds_cstr(&ds));
+     }
+ 
+diff --git a/vtep/ovs-vtep b/vtep/ovs-vtep
+index 46a5692..583e6bf 100755
+--- a/vtep/ovs-vtep
++++ b/vtep/ovs-vtep
+@@ -531,8 +531,8 @@ def del_binding(binding, ls):
+                   % (ps_name, port_no, vlan_))
+         ovs_ofctl("del-flows %s in_port=%s" % (ps_name, patch_no))
+     else:
+-        ovs_ofctl("del-flows %s in_port=%s" % (ps_name, port_no))
+-        ovs_ofctl("del-flows %s in_port=%s" % (ps_name, patch_no))
++        ovs_ofctl("--strict del-flows %s in_port=%s" % (ps_name, port_no))
++        ovs_ofctl("--strict del-flows %s in_port=%s" % (ps_name, patch_no))
+ 
+     ls.del_lbinding(lbinding)
+ 
