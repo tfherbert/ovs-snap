@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 11929.git1cef5fff
+%define snapver 11974.gitc4623bb8
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -490,6 +490,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Mon Apr 04 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11974.gitc4623bb8.1
+- New snapshot
+
 * Tue Mar 29 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11929.git1cef5fff.1
 - new snapshot
 - sync up ovn packaging with upstream (split to many pieces)
