@@ -2,7 +2,7 @@
 
 # option to build without dpdk
 %bcond_without dpdk
-%define dpdk_ver 2.2.0
+%define dpdk_ver 16.04
 
 %define ver 2.5.90
 %define rel 1
@@ -33,6 +33,8 @@ Source100: ovs-snapshot.sh
 # custom linker script for dpdk
 Source101: libdpdk.so
 
+# Adjust to DPDK 16.04 ethdev speed API
+Patch1: openvswitch-2.5.90-dpdk-ethdev-speed.patch
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 
@@ -144,6 +146,7 @@ Docker network plugins for OVN.
 %prep
 %setup -q -n %{name}-%{srcver}
 
+%patch1 -p1 -b .ethdev-speed
 %patch3 -p1 -b .dpdk-options
 
 %patch20 -p1 -b .dpdk-lib
@@ -492,6 +495,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Mon Apr 04 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11974.gitc4623bb8.1
 - New snapshot
+- Adjust to new DPDK 16.04 ethdev speed API
 
 * Tue Mar 29 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11929.git1cef5fff.1
 - new snapshot
