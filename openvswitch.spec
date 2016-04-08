@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 11974.gitc4623bb8
+%define snapver 11987.git62453dad
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -493,6 +493,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Fri Apr 08 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11987.git62453dad.1
+- New snapshot
+
 * Mon Apr 04 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11974.gitc4623bb8.1
 - New snapshot
 - Adjust to new DPDK 16.04 ethdev speed API
