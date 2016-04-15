@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 11987.git62453dad
+%define snapver 12018.git25d436fb
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -493,6 +493,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Fri Apr 15 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12018.git25d436fb.1
+- New snapshot
+- Actually working DPDK link speed reporting
+
 * Fri Apr 08 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.11987.git62453dad.1
 - New snapshot
 
