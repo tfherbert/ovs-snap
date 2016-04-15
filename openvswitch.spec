@@ -5,7 +5,7 @@
 %define dpdk_ver 2.2.0
 
 %define ver 2.5.0
-%define rel 4.gite099c86c
+%define rel 5.gite099c86c
 #define snapver 11443.git575ceed7
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -38,6 +38,7 @@ Patch1: openvswitch-2.5.0-branch.patch
 
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
+Patch4: openvswitch-2.5.90-dpdk-ethdev-speed.patch
 
 # Use our own linker script
 Patch20: openvswitch-2.4.90-dpdk-lib-1.patch
@@ -116,6 +117,7 @@ overlays and security groups.
 %patch1 -p1
 
 %patch3 -p1 -b .dpdk-options
+%patch4 -p1 -b .dpdk-ethspeed
 
 %patch20 -p1 -b .dpdk-lib
 
@@ -402,6 +404,9 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %attr(755,root,root) /var/lib/ovn-northd
 
 %changelog
+* Fri Apr 15 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-5.gite099c86c
+- Port to and build against DPDK 16.04
+
 * Mon Apr 04 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.0-4.gite099c86c
 - Updated snapshot from 2.5-branch
 - Add git hash to release for determining exact upstream version used
