@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 12018.git25d436fb
+%define snapver 12032.gitc61e93d6
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -33,8 +33,6 @@ Source100: ovs-snapshot.sh
 # custom linker script for dpdk
 Source101: libdpdk.so
 
-# Adjust to DPDK 16.04 ethdev speed API
-Patch1: openvswitch-2.5.90-dpdk-ethdev-speed.patch
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 
@@ -146,7 +144,6 @@ Docker network plugins for OVN.
 %prep
 %setup -q -n %{name}-%{srcver}
 
-%patch1 -p1 -b .ethdev-speed
 %patch3 -p1 -b .dpdk-options
 
 %patch20 -p1 -b .dpdk-lib
@@ -493,6 +490,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Tue Apr 19 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12032.gitc61e93d6.1
+- New snapshot
+
 * Fri Apr 15 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12018.git25d436fb.1
 - New snapshot
 - Actually working DPDK link speed reporting
