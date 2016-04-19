@@ -30,14 +30,11 @@ Source0: %{name}-%{srcver}.tar.gz
 
 # snapshot creation script, not used for build itself
 Source100: ovs-snapshot.sh
-# custom linker script for dpdk
-Source101: libdpdk.so
 
+# Avoid --whole-archive with DPDK lib
+Patch1: openvswitch-2.5.90-dpdk-lib.patch
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
-
-# Use our own linker script
-Patch20: openvswitch-2.4.90-dpdk-lib-1.patch
 
 ExcludeArch: ppc
 
@@ -144,13 +141,8 @@ Docker network plugins for OVN.
 %prep
 %setup -q -n %{name}-%{srcver}
 
+%patch1 -p1 -b .dpdk-lib
 %patch3 -p1 -b .dpdk-options
-
-%patch20 -p1 -b .dpdk-lib
-
-# libdpdk is crazy as it brings in tonne of libs we dont need,
-# use a custom linker script tailored to our needs
-cp %{SOURCE101} .
 
 %build
 %if %{with dpdk}
@@ -492,6 +484,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Tue Apr 19 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12032.gitc61e93d6.1
 - New snapshot
+- Drop custom linker script, patch out --whole-archive linker flag instead
 
 * Fri Apr 15 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12018.git25d436fb.1
 - New snapshot
