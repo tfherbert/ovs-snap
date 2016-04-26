@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 12032.gitc61e93d6
+%define snapver 12060.git46ed1382
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -482,6 +482,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Tue Apr 26 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12060.git46ed1382.1
+- New snapshot
+
 * Tue Apr 19 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12032.gitc61e93d6.1
 - New snapshot
 - Drop custom linker script, patch out --whole-archive linker flag instead
