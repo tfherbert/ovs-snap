@@ -1,0 +1,12 @@
+diff --git a/lib/netdev-dpdk.c b/lib/netdev-dpdk.c
+index 208c5f5..a127272 100644
+--- a/lib/netdev-dpdk.c
++++ b/lib/netdev-dpdk.c
+@@ -1693,7 +1693,6 @@ netdev_dpdk_get_stats(const struct netdev *netdev, struct netdev_stats *stats)
+     /* DPDK counts imissed as errors, but count them here as dropped instead */
+     stats->rx_errors = rte_stats.ierrors - rte_stats.imissed;
+     stats->tx_errors = rte_stats.oerrors;
+-    stats->multicast = rte_stats.imcasts;
+ 
+     rte_spinlock_lock(&dev->stats_lock);
+     stats->tx_dropped = dev->stats.tx_dropped;

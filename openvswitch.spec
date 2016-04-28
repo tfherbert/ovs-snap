@@ -36,6 +36,8 @@ Patch1: openvswitch-2.5.90-dpdk-lib.patch
 # Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
 Patch3: openvswitch-2.3.90-dpdk-options.patch
 
+Patch10: openvswitch-2.5.90-dpdk-stats.patch
+
 ExcludeArch: ppc
 
 BuildRequires: autoconf automake libtool
@@ -482,6 +484,7 @@ rm -rf $RPM_BUILD_ROOT
 * Wed Apr 27 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12065.gitd291a10c.1
 - New snapshot
 - Switch to %%autosetup to make patching saner, buildrequire git
+- Fix build with DPDK >= 16.07
 
 * Tue Apr 26 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12060.git46ed1382.1
 - New snapshot
