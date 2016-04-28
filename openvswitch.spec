@@ -42,7 +42,7 @@ BuildRequires: autoconf automake libtool
 BuildRequires: systemd-units openssl openssl-devel
 BuildRequires: python python-twisted-core python-zope-interface PyQt4
 BuildRequires: desktop-file-utils python-six
-BuildRequires: groff graphviz
+BuildRequires: groff graphviz git
 
 %if %{with dpdk}
 BuildRequires: dpdk-devel >= %{dpdk_ver}
@@ -139,10 +139,7 @@ Requires: openvswitch openvswitch-ovn-common python-openvswitch
 Docker network plugins for OVN.
 
 %prep
-%setup -q -n %{name}-%{srcver}
-
-%patch1 -p1 -b .dpdk-lib
-%patch3 -p1 -b .dpdk-options
+%autosetup -n %{name}-%{srcver} -S git
 
 %build
 %if %{with dpdk}
@@ -484,6 +481,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Wed Apr 27 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12065.gitd291a10c.1
 - New snapshot
+- Switch to %%autosetup to make patching saner, buildrequire git
 
 * Tue Apr 26 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12060.git46ed1382.1
 - New snapshot
