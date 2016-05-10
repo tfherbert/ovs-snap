@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 12065.gitd291a10c
+%define snapver 12107.git06922579
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -33,8 +33,6 @@ Source100: ovs-snapshot.sh
 
 # Avoid --whole-archive with DPDK lib
 Patch1: openvswitch-2.5.90-dpdk-lib.patch
-# Pass DPDK_OPTIONS from /etc/sysconfig/openvswitch 
-Patch3: openvswitch-2.3.90-dpdk-options.patch
 
 Patch10: openvswitch-2.5.90-dpdk-stats.patch
 
@@ -481,6 +479,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Tue May 10 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12107.git06922579.1
+- New snapshot
+- Drop DPDK_OPTIONS patch, configuration through database is now upstream
+
 * Wed Apr 27 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12065.gitd291a10c.1
 - New snapshot
 - Switch to %%autosetup to make patching saner, buildrequire git
