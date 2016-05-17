@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 12107.git06922579
+%define snapver 12132.git3ff1613e
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -479,6 +479,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Tue May 17 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12132.git3ff1613e.1
+- New snapshot
+
 * Tue May 10 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12107.git06922579.1
 - New snapshot
 - Drop DPDK_OPTIONS patch, configuration through database is now upstream
