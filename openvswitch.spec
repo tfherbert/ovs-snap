@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 12132.git3ff1613e
+%define snapver 12141.gitcae7529c
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -479,6 +479,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Wed May 18 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12141.gitcae7529c.1
+- New snapshot
+
 * Tue May 17 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12132.git3ff1613e.1
 - New snapshot
 
