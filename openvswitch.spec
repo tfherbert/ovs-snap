@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 12215.gite12ec36b
+%define snapver 12233.gita478c4ef
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -30,9 +30,6 @@ Source0: %{name}-%{srcver}.tar.gz
 
 # snapshot creation script, not used for build itself
 Source100: ovs-snapshot.sh
-
-# Avoid --whole-archive with DPDK lib
-Patch1: openvswitch-2.5.90-dpdk-lib.patch
 
 Patch10: openvswitch-2.5.90-dpdk-stats.patch
 
@@ -479,6 +476,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Fri Jun 03 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12233.gita478c4ef.1
+- New snapshot
+- Drop the non-working whole-archive tinkering patch
+
 * Fri May 27 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12215.gite12ec36b.1
 - New snapshot
 
