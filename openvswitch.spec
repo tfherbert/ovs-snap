@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 12233.gita478c4ef
+%define snapver 12249.gitf7a8b4d4
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -476,6 +476,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Mon Jun 06 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12249.gitf7a8b4d4.1
+- New snapshot
+
 * Fri Jun 03 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12233.gita478c4ef.1
 - New snapshot
 - Drop the non-working whole-archive tinkering patch
