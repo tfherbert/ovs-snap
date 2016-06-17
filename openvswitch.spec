@@ -5,7 +5,7 @@
 %define dpdk_ver 16.04
 
 %define ver 2.5.90
-%define rel 1
+%define rel 2
 %define snapver 12320.git31871ee3
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
@@ -32,6 +32,7 @@ Source0: %{name}-%{srcver}.tar.gz
 Source100: ovs-snapshot.sh
 
 Patch10: openvswitch-2.5.90-dpdk-stats.patch
+Patch11: 0001-disable-dpdk-extended-stats-until-properly-ported-to.patch
 
 ExcludeArch: ppc
 
@@ -476,6 +477,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Wed Jun 15 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12320.git31871ee3.2
+- Disable DPDK extended stats until properly ported to new API
+
 * Wed Jun 15 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12320.git31871ee3.1
 - New snapshot
 

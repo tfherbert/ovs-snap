@@ -1,0 +1,62 @@
+From 9acc8274a0f7264114aea750f09ee7d2e4d5ff6e Mon Sep 17 00:00:00 2001
+Message-Id: <9acc8274a0f7264114aea750f09ee7d2e4d5ff6e.1466164131.git.pmatilai@redhat.com>
+From: Panu Matilainen <pmatilai@redhat.com>
+Date: Fri, 17 Jun 2016 14:48:26 +0300
+Subject: [PATCH] - disable dpdk extended stats until properly ported to new
+ api
+
+---
+ lib/netdev-dpdk.c | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/lib/netdev-dpdk.c b/lib/netdev-dpdk.c
+index 582569c..b11a497 100644
+--- a/lib/netdev-dpdk.c
++++ b/lib/netdev-dpdk.c
+@@ -1763,6 +1763,7 @@ netdev_dpdk_vhost_get_stats(const struct netdev *netdev,
+     return 0;
+ }
+ 
++#if 0
+ static void
+ netdev_dpdk_convert_xstats(struct netdev_stats *stats,
+                            const struct rte_eth_xstats *xstats,
+@@ -1823,6 +1824,7 @@ netdev_dpdk_convert_xstats(struct netdev_stats *stats,
+         }
+     }
+ }
++#endif
+ 
+ static int
+ netdev_dpdk_get_stats(const struct netdev *netdev, struct netdev_stats *stats)
+@@ -1834,15 +1836,16 @@ netdev_dpdk_get_stats(const struct netdev *netdev, struct netdev_stats *stats)
+     netdev_dpdk_get_carrier(netdev, &gg);
+     ovs_mutex_lock(&dev->mutex);
+ 
+-    struct rte_eth_xstats *rte_xstats;
+-    int rte_xstats_len, rte_xstats_ret;
+-
+     if (rte_eth_stats_get(dev->port_id, &rte_stats)) {
+         VLOG_ERR("Can't get ETH statistics for port: %i.", dev->port_id);
+         ovs_mutex_unlock(&dev->mutex);
+         return EPROTO;
+     }
+ 
++#if 0
++    struct rte_eth_xstats *rte_xstats;
++    int rte_xstats_len, rte_xstats_ret;
++
+     rte_xstats_len = rte_eth_xstats_get(dev->port_id, NULL, 0);
+     if (rte_xstats_len > 0) {
+         rte_xstats = dpdk_rte_mzalloc(sizeof(*rte_xstats) * rte_xstats_len);
+@@ -1856,6 +1859,7 @@ netdev_dpdk_get_stats(const struct netdev *netdev, struct netdev_stats *stats)
+     } else {
+         VLOG_WARN("Can't get XSTATS counters for port: %i.", dev->port_id);
+     }
++#endif
+ 
+     stats->rx_packets = rte_stats.ipackets;
+     stats->tx_packets = rte_stats.opackets;
+-- 
+2.5.5
+
