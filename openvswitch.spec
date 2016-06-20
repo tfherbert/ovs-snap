@@ -5,8 +5,8 @@
 %define dpdk_ver 16.04
 
 %define ver 2.5.90
-%define rel 2
-%define snapver 12320.git31871ee3
+%define rel 1
+%define snapver 12323.gitdb8f13b0
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -45,6 +45,7 @@ BuildRequires: groff graphviz git
 %if %{with dpdk}
 BuildRequires: dpdk-devel >= %{dpdk_ver}
 BuildRequires: autoconf automake
+BuildRequires: numactl-devel
 Provides: %{name}-dpdk = %{version}-%{release}
 %endif
 
@@ -477,6 +478,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Mon Jun 20 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12323.gitdb8f13b0.1
+- New snapshot
+- Buildrequire numactl-devel
+
 * Wed Jun 15 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12320.git31871ee3.2
 - Disable DPDK extended stats until properly ported to new API
 
