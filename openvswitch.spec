@@ -6,7 +6,7 @@
 
 %define ver 2.5.90
 %define rel 1
-%define snapver 12323.gitdb8f13b0
+%define snapver 12394.git2225c0b9
 
 %define srcver %{ver}%{?snapver:-%{snapver}}
 
@@ -413,6 +413,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/ovs-vsctl
 %{_bindir}/ovsdb-client
 %{_bindir}/ovsdb-tool
+%{_bindir}/ovs-tcpdump
 %{_bindir}/ovs-testcontroller
 %{_bindir}/ovs-pki
 %{_bindir}/vtep-ctl
@@ -435,6 +436,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man8/ovs-vsctl.8*
 %{_mandir}/man8/ovs-vswitchd.8*
 %{_mandir}/man8/ovs-parse-backtrace.8*
+%{_mandir}/man8/ovs-tcpdump.8*
 %{_mandir}/man8/ovs-testcontroller.8*
 %doc COPYING DESIGN.md INSTALL.SSL.md NOTICE README.md WHY-OVS.md
 %doc FAQ.md NEWS INSTALL.DPDK.md rhel/README.RHEL
@@ -478,6 +480,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_unitdir}/ovn-controller-vtep.service
 
 %changelog
+* Mon Jun 27 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12394.git2225c0b9.1
+- New snapshot
+
 * Mon Jun 20 2016 Panu Matilainen <pmatilai@redhat.com> - 2.5.90-0.12323.gitdb8f13b0.1
 - New snapshot
 - Buildrequire numactl-devel
